@@ -971,7 +971,7 @@ function PlayerPickerModal({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Cerca giocatore..."
-          className="mt-4 h-9 w-full rounded-full border border-[#1E3448] bg-[#101D2C] px-3.5 text-xs text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-[#22E6C3]/50"
+          className="mt-4 h-10 w-full rounded-full border border-[#1E3448] bg-[#101D2C] px-3.5 text-xs text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-[#22E6C3]/50 sm:h-9"
         />
 
         <div className="mt-4">
@@ -1203,7 +1203,7 @@ function TeamFilterChip({
       type="button"
       onClick={onClick}
       aria-pressed={isActive}
-      className={`flex min-h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-bold transition ${
+      className={`flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-bold transition sm:min-h-9 ${
         isActive
           ? "border-[#22E6C3] bg-[#123A3B] text-[#22E6C3]"
           : "border-[#1E3448] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
@@ -1255,7 +1255,7 @@ function RoleFilterChip({
       aria-pressed={isActive}
       aria-label={label}
       title={label}
-      className={`grid min-h-14 w-full place-items-center rounded-xl border transition ${
+      className={`grid min-h-12 w-full place-items-center rounded-xl border transition sm:min-h-14 ${
         isActive
           ? PLAYER_ROLE_STYLES[position]
           : "border-[#1E3448] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
@@ -1267,7 +1267,7 @@ function RoleFilterChip({
         width={128}
         height={128}
         aria-hidden="true"
-        className={`h-9 w-9 object-contain transition ${isActive ? "scale-105" : "opacity-65 grayscale-[35%]"}`}
+        className={`h-8 w-8 object-contain transition sm:h-9 sm:w-9 ${isActive ? "scale-105" : "opacity-65 grayscale-[35%]"}`}
       />
       <span className="sr-only">{label}</span>
     </button>
