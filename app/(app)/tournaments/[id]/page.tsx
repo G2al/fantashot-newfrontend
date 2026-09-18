@@ -175,11 +175,6 @@ export default function TournamentDetailPage({
               <div className="sm:hidden">
                 <MobileStatusLine
                   status={tournament.status}
-                  endDate={
-                    tournament.status === "enrollments"
-                      ? tournament.enrollments_end_date
-                      : null
-                  }
                 />
               </div>
               <div className="hidden flex-col items-end gap-2 sm:flex">
@@ -231,7 +226,6 @@ export default function TournamentDetailPage({
                           : Promise.resolve();
 
                       await Promise.all([reload(), walletRefresh]);
-                      setIsBuilding(false);
                     }}
                   />
                 ) : (
@@ -620,16 +614,9 @@ function EnrollmentCountdown({ endDate }: { endDate: string }) {
   );
 }
 
-/** Su mobile badge stato + countdown diventano un'unica riga, per non occupare due pill separate sopra l'hero. */
-function MobileStatusLine({
-  status,
-  endDate,
-}: {
-  status: TournamentDetail["status"];
-  endDate: string | null;
-}) {
+/** Su mobile l'hero mostra solo lo stato; il countdown resta nell'area formazione. */
+function MobileStatusLine({ status }: { status: TournamentDetail["status"] }) {
   const isLive = status === "enrollments" || status === "in-progress";
-  const countdown = useCountdown(endDate);
 
   return (
     <span
@@ -641,7 +628,6 @@ function MobileStatusLine({
     >
       {isLive ? <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current animate-pulse" /> : null}
       {getStatusLabel(status)}
-      {countdown ? <span className="font-mono text-white">{countdown}</span> : null}
     </span>
   );
 }

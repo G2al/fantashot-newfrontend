@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useCountdown } from "@/hooks/use-countdown";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -94,6 +94,14 @@ export function TeamBuilder({
   const [actionSheetSlot, setActionSheetSlot] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!successMessage) return;
+
+    const timeoutId = window.setTimeout(() => setSuccessMessage(null), 3500);
+    return () => window.clearTimeout(timeoutId);
+  }, [successMessage]);
 
   if (!selectedModule) {
     return (
@@ -128,6 +136,7 @@ export function TeamBuilder({
   function handleModuleChange(nextModuleId: number) {
     setModuleId(nextModuleId);
     setError(null);
+    setSuccessMessage(null);
     setLineup((current) => {
       const next: LineupPayload["lineup"] = {};
       BENCH_SLOT_KEYS.forEach((key) => {
@@ -138,6 +147,7 @@ export function TeamBuilder({
   }
 
   function handleAssignPlayer(slotKey: string, player: TournamentPlayer) {
+    setSuccessMessage(null);
     setLineup((current) => ({
       ...current,
       [slotKey]: {
@@ -149,6 +159,7 @@ export function TeamBuilder({
   }
 
   function handleRemovePlayer(slotKey: string) {
+    setSuccessMessage(null);
     setLineup((current) => {
       const next = { ...current };
       delete next[slotKey];
@@ -157,6 +168,7 @@ export function TeamBuilder({
   }
 
   function handleToggleCaptain(slotKey: string) {
+    setSuccessMessage(null);
     setLineup((current) => {
       const next: LineupPayload["lineup"] = {};
       Object.entries(current).forEach(([key, entry]) => {
@@ -169,11 +181,13 @@ export function TeamBuilder({
   function handleRandomize() {
     setLineup(buildRandomLineup(selectedModule, selectablePlayers));
     setError(null);
+    setSuccessMessage(null);
   }
 
   function handleClear() {
     setLineup({});
     setError(null);
+    setSuccessMessage(null);
   }
 
   /**
@@ -205,6 +219,7 @@ export function TeamBuilder({
   async function handleSubmit() {
     if (!token) return;
     setError(null);
+    setSuccessMessage(null);
 
     if (!isComplete) {
       setError(
@@ -230,6 +245,7 @@ export function TeamBuilder({
       }
 
       if (onSaved) await onSaved();
+      setSuccessMessage("Formazione salvata con successo.");
     } catch (requestError) {
       setError(
         requestError instanceof ApiError
@@ -407,6 +423,7 @@ export function TeamBuilder({
             captainCount={captainCount}
             isSubmitting={isSubmitting}
             error={error}
+            successMessage={successMessage}
             hasAnyPlayer={hasAnyPlayer}
             onClear={handleClear}
             onRandomize={handleRandomize}
@@ -420,6 +437,14 @@ export function TeamBuilder({
           {error ? (
             <p className="mx-auto mb-2 max-w-md truncate rounded-md border border-red-500/20 bg-red-950/90 px-3 py-1.5 text-center text-[10px] font-semibold text-red-200">
               {error}
+            </p>
+          ) : null}
+          {successMessage ? (
+            <p
+              role="status"
+              className="mx-auto mb-2 max-w-md rounded-md border border-green-500/25 bg-green-950/90 px-3 py-1.5 text-center text-[10px] font-semibold text-green-200"
+            >
+              {successMessage}
             </p>
           ) : null}
           <div className="mx-auto grid max-w-md grid-cols-[44px_minmax(84px,0.8fr)_minmax(0,1.4fr)] gap-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
@@ -565,6 +590,7 @@ function FormationSummary({
   captainCount,
   isSubmitting,
   error,
+  successMessage,
   hasAnyPlayer,
   onClear,
   onRandomize,
@@ -579,6 +605,7 @@ function FormationSummary({
   captainCount: number;
   isSubmitting: boolean;
   error: string | null;
+  successMessage: string | null;
   hasAnyPlayer: boolean;
   onClear: () => void;
   onRandomize: () => void;
@@ -671,6 +698,14 @@ function FormationSummary({
           {error ? (
             <p className="mb-3 rounded-lg border border-red-500/20 bg-red-950/60 px-3 py-2 text-xs text-red-200">
               {error}
+            </p>
+          ) : null}
+          {successMessage ? (
+            <p
+              role="status"
+              className="mb-3 rounded-lg border border-green-500/25 bg-green-950/60 px-3 py-2 text-xs font-semibold text-green-200"
+            >
+              {successMessage}
             </p>
           ) : null}
 
