@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <radialGradient id="bgA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(64 44) rotate(90) scale(84)">
+      <stop stop-color="#1A1A1A"/>
+      <stop offset="1" stop-color="#0B0B0B"/>
+    </radialGradient>
+    <filter id="glowA" x="0" y="0" width="128" height="128" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="64" cy="64" r="52" fill="url(#bgA)" stroke="#EF4444" stroke-width="4" filter="url(#glowA)"/>
+  <text x="64" y="74" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="46" font-weight="800" fill="#EF4444">A</text>
+</svg>
