@@ -110,7 +110,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#06111B] text-zinc-50">
       <header className="relative z-40 flex h-16 items-center justify-between gap-3 border-b border-white/10 bg-[#06111B]/95 px-4 backdrop-blur sm:px-6">
-        <Link href="/dashboard" aria-label="Vai alla dashboard" className="relative block h-9 w-36">
+        <Link href="/dashboard" aria-label="Vai alla dashboard" className="relative block h-9 w-32 sm:w-36">
           {/* eslint-disable-next-line @next/next/no-img-element -- asset di brand sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
           <img
             src="/images/logo-fantashot.png"
@@ -119,12 +119,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           />
         </Link>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden h-10 items-center gap-2 rounded-full border border-white/10 bg-[#0F1E2E] px-3 text-sm font-bold text-white sm:flex">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div
+            className="flex h-10 items-center gap-1.5 rounded-full border border-white/10 bg-[#0F1E2E] px-2 text-[11px] font-bold text-white sm:gap-2 sm:px-3 sm:text-sm"
+            aria-label={`Saldo wallet: ${formatWalletTotal(user?.wallets)}`}
+          >
             <span className="text-[#22E6C3]">
               <WalletIcon />
             </span>
-            {formatWalletTotal(user?.wallets)}
+            <span className="whitespace-nowrap">{formatWalletTotal(user?.wallets)}</span>
           </div>
 
           <div ref={profileMenuRef} className="relative">
@@ -149,9 +152,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </p>
                   <p className="truncate text-xs text-zinc-500">{user?.email}</p>
                 </div>
-                <p className="px-3 py-2 text-xs font-bold text-white sm:hidden">
-                  {formatWalletTotal(user?.wallets)}
-                </p>
                 <button
                   type="button"
                   onClick={() => void handleLogout()}

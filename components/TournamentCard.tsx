@@ -30,8 +30,8 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
   const coverUrl = resolveApiAssetUrl(tournament.cover_image_url);
 
   return (
-    <article className="group flex min-h-[132px] overflow-hidden rounded-lg border border-white/10 bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 hover:-translate-y-0.5 hover:border-[#22E6C3]/30 hover:shadow-[0_18px_52px_rgba(34,230,195,0.12)] lg:min-h-0 lg:flex-col">
-      <div className="relative flex w-[96px] shrink-0 items-center justify-center overflow-hidden border-r border-white/8 bg-[radial-gradient(circle_at_50%_40%,rgba(34,230,195,0.2),rgba(6,17,27,0.92)_72%)] lg:h-[132px] lg:w-full lg:border-b lg:border-r-0">
+    <article className="group overflow-hidden rounded-lg border border-white/10 bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 hover:-translate-y-0.5 hover:border-[#22E6C3]/30 hover:shadow-[0_18px_52px_rgba(34,230,195,0.12)] lg:flex lg:flex-col">
+      <div className="relative hidden h-[132px] w-full shrink-0 items-center justify-center overflow-hidden border-b border-white/8 bg-[radial-gradient(circle_at_50%_40%,rgba(34,230,195,0.2),rgba(6,17,27,0.92)_72%)] lg:flex">
         {coverUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element -- host della copertina variabile per ambiente, evitiamo il whitelisting di next/image */}
@@ -76,7 +76,14 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           <div className="min-w-0">
             <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-[#22E6C3]">
               {isMultiLeague
-                ? `Multi-campionato · ${tournament.leagues.length} leghe`
+                ? (
+                    <>
+                      <span className="lg:hidden">Multi-campionato</span>
+                      <span className="hidden lg:inline">
+                        Multi-campionato · {tournament.leagues.length} campionati
+                      </span>
+                    </>
+                  )
                 : (primaryLeague?.name ?? "Campionato da definire")}
             </p>
             <h2 className="mt-1 line-clamp-2 text-base font-bold leading-tight text-white lg:text-lg">
@@ -91,6 +98,8 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             {STATUS_LABEL[tournament.status]}
           </span>
         </div>
+
+        <MobileLeagueSummary leagues={tournament.leagues} />
 
         <div className="mt-3 grid grid-cols-3 gap-2 border-t border-white/8 pt-3">
           <Metric
@@ -131,6 +140,45 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
         </div>
       </div>
     </article>
+  );
+}
+
+function MobileLeagueSummary({ leagues }: { leagues: Tournament["leagues"] }) {
+  if (!leagues.length) return null;
+
+  const visibleLeagues = leagues.slice(0, 3);
+  const hiddenLeagueCount = leagues.length - visibleLeagues.length;
+
+  return (
+    <div
+      className="mt-3 flex min-w-0 items-center gap-2 lg:hidden"
+      aria-label={
+        leagues.length === 1
+          ? `Campionato ${leagues[0].name}`
+          : `${leagues.length} campionati nel torneo`
+      }
+    >
+      <div className="flex shrink-0 items-center pl-1" aria-hidden="true">
+        {visibleLeagues.map((league, index) => (
+          <div
+            key={league.id}
+            className={`grid h-8 w-8 place-items-center rounded-full border-2 border-[#0F1E2E] bg-[#101D2C] shadow-md ${index ? "-ml-2" : ""}`}
+          >
+            <LeagueLogo logoUrl={league.logo} label={league.name} />
+          </div>
+        ))}
+        {hiddenLeagueCount > 0 ? (
+          <span className="-ml-2 grid h-8 min-w-8 place-items-center rounded-full border-2 border-[#0F1E2E] bg-[#123A3B] px-1 text-[10px] font-black text-[#3AF5D4] shadow-md">
+            +{hiddenLeagueCount}
+          </span>
+        ) : null}
+      </div>
+      <span className="truncate text-xs font-bold text-zinc-300">
+        {leagues.length === 1
+          ? leagues[0].name
+          : `${leagues.length} campionati`}
+      </span>
+    </div>
   );
 }
 
