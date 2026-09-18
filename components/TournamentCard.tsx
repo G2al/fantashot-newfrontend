@@ -122,7 +122,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             href={`/tournaments/${tournament.id}`}
             className={`flex h-9 shrink-0 items-center justify-center rounded-md px-3 text-xs font-bold transition ${
               tournament.is_user_registered
-                ? "border border-[#1ED8B7]/35 bg-[#22E6C3]/10 text-[#E9FFFA] hover:bg-[#22E6C3]/20"
+                ? "border border-[#22E6C3] bg-[#123A3B] text-[#22E6C3] hover:bg-[#22E6C3]/20"
                 : "bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] text-[#06111B] shadow-[0_8px_24px_rgba(34,230,195,0.25)] hover:from-[#1ED8B7] hover:to-[#22E6C3]"
             }`}
           >
@@ -169,10 +169,10 @@ function getStatusHint(status: TournamentStatus) {
 
 function getStatusBadgeClassName(status: TournamentStatus) {
   if (status === "enrollments") {
-    return "bg-[#22E6C3] text-white";
+    return "border border-[#22E6C3] bg-[#123A3B] text-[#22E6C3]";
   }
   if (status === "in-progress") {
-    return "bg-[#18C6A7] text-white";
+    return "border border-[#18C6A7] bg-[#123A3B] text-[#18C6A7]";
   }
   if (status === "waiting-for-start" || status === "ready") {
     return "bg-amber-400 text-black";

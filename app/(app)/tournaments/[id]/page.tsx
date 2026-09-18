@@ -586,10 +586,10 @@ function StatusBadge({ status }: { status: TournamentDetail["status"] }) {
 
   return (
     <span
-      className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-black uppercase tracking-wide ${
+      className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-black uppercase tracking-wide ${
         status === "cancelled"
-          ? "bg-zinc-800/70 text-zinc-500 line-through decoration-zinc-600"
-          : "bg-[#22E6C3]/15 text-[#E9FFFA] ring-1 ring-[#22E6C3]/30"
+          ? "border-transparent bg-zinc-800/70 text-zinc-500 line-through decoration-zinc-600"
+          : "border-[#22E6C3] bg-[#123A3B] text-[#22E6C3]"
       }`}
     >
       {isLive ? <span className="h-2 w-2 animate-pulse rounded-full bg-current" /> : null}
