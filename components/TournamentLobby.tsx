@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { TournamentCard } from "@/components/TournamentCard";
-import { CustomDropdown, CountryLogo, LeagueLogo } from "@/components/lobby/shared";
+import { CustomDropdown, LeagueLogo } from "@/components/lobby/shared";
 import {
   GENERIC_TOURNAMENTS_ERROR,
   useLobbyFilters,
@@ -68,26 +69,38 @@ export function TournamentLobby() {
 
   return (
     <div className="py-4 lg:py-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">
-            Fantashot
-          </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white lg:text-3xl">
-            Tornei
-          </h1>
-          <p className="mt-1 text-sm text-zinc-400 lg:text-base">
-            Scegli il torneo, crea la tua rosa e sfida gli altri giocatori.
-          </p>
-        </div>
-        <SearchField
-          value={searchValue}
-          onChange={(value) => {
-            setSearchValue(value);
-            resetToFirstPage();
-          }}
-          className="w-full sm:max-w-[340px]"
+      <div className="relative min-h-[160px] overflow-hidden rounded-2xl border border-white/10 bg-[#0F1E2E] sm:min-h-[190px]">
+        <Image
+          src="/images/banner-torneo.png"
+          alt=""
+          fill
+          priority
+          sizes="(min-width: 1680px) 1620px, 100vw"
+          className="pointer-events-none object-cover object-center"
         />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(6,17,27,0.92)_0%,rgba(6,17,27,0.55)_45%,rgba(6,17,27,0.15)_100%)]" />
+
+        <div className="relative flex min-h-[160px] flex-col justify-center gap-3 p-4 sm:min-h-[190px] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#22E6C3]">
+              Fantashot
+            </p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-white lg:text-3xl">
+              Tornei
+            </h1>
+            <p className="mt-1 max-w-md text-sm text-zinc-300 lg:text-base">
+              Scegli il torneo, crea la tua rosa e sfida gli altri giocatori.
+            </p>
+          </div>
+          <SearchField
+            value={searchValue}
+            onChange={(value) => {
+              setSearchValue(value);
+              resetToFirstPage();
+            }}
+            className="w-full sm:w-auto sm:max-w-[340px] sm:shrink-0"
+          />
+        </div>
       </div>
 
       {/* Tag paesi + campionati, multi-selezionabili in OR: un torneo puo'
@@ -134,8 +147,8 @@ export function TournamentLobby() {
             aria-pressed={showEnrolledOnly}
             className={`flex h-10 items-center gap-2 rounded-md border px-3 text-xs font-semibold transition ${
               showEnrolledOnly
-                ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-200"
-                : "border-white/10 bg-[#1c0b09]/70 text-zinc-300 hover:border-white/20"
+                ? "border-[#1ED8B7]/30 bg-[#22E6C3]/15 text-[#E9FFFA]"
+                : "border-white/10 bg-[#0F1E2E]/70 text-zinc-300 hover:border-white/20"
             }`}
           >
             <UserCheckIcon />
@@ -146,12 +159,12 @@ export function TournamentLobby() {
           <button
             type="button"
             onClick={() => setIsFilterSheetOpen(true)}
-            className="relative flex h-10 items-center gap-2 rounded-md border border-white/10 bg-[#1c0b09]/70 px-3 text-xs font-semibold text-zinc-300 lg:hidden"
+            className="relative flex h-10 items-center gap-2 rounded-md border border-white/10 bg-[#0F1E2E]/70 px-3 text-xs font-semibold text-zinc-300 lg:hidden"
           >
             <FilterIcon />
             Filtri
             {activeFilterCount ? (
-              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[#22E6C3] px-1 text-[10px] font-bold text-[#06111B]">
                 {activeFilterCount}
               </span>
             ) : null}
@@ -192,7 +205,7 @@ export function TournamentLobby() {
       {isLoading ? (
         <TournamentLobbySkeleton />
       ) : error ? (
-        <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-950/35 px-5 py-4 text-sm text-amber-200">
+        <div className="mt-5 rounded-xl border border-red-500/20 bg-red-950/35 px-5 py-4 text-sm text-red-200">
           {error === GENERIC_TOURNAMENTS_ERROR
             ? "Impossibile caricare i tornei. Riprova."
             : error}
@@ -204,7 +217,7 @@ export function TournamentLobby() {
           ))}
         </div>
       ) : (
-        <div className="mt-5 rounded-xl border border-white/10 bg-[#1c0b09]/60 px-5 py-12 text-center backdrop-blur-lg">
+        <div className="mt-5 rounded-xl border border-white/10 bg-[#0F1E2E]/60 px-5 py-12 text-center backdrop-blur-lg">
           <p className="text-base font-semibold text-zinc-200">
             Nessun torneo trovato
           </p>
@@ -230,7 +243,7 @@ export function TournamentLobby() {
                 onClick={() => setCurrentPage(page)}
                 className={`grid h-10 min-w-10 place-items-center rounded-lg px-3 text-sm font-semibold transition ${
                   page === safeCurrentPage
-                    ? "bg-red-500/25 text-white"
+                    ? "bg-[#22E6C3]/25 text-white"
                     : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100"
                 }`}
               >
@@ -290,7 +303,7 @@ function SearchField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder="Cerca torneo o campionato..."
-        className="h-11 w-full rounded-full border border-white/10 bg-[#1c0b09]/70 px-4 pr-11 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-red-500/50"
+        className="h-11 w-full rounded-full border border-[#243B50] bg-[#101D2C] px-4 pr-11 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-[#22E6C3]"
       />
       <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-zinc-400">
         <SearchIcon />
@@ -317,15 +330,11 @@ function FilterTagButton({
       aria-pressed={isActive}
       className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition ${
         isActive
-          ? "border-red-500/45 bg-red-500/20 text-red-100"
-          : "border-white/10 bg-[#1c0b09]/60 text-zinc-400 hover:border-white/20"
+          ? "border-[#22E6C3]/45 bg-[#22E6C3]/20 text-[#E9FFFA]"
+          : "border-white/10 bg-[#0F1E2E]/60 text-zinc-400 hover:border-white/20"
       }`}
     >
-      {logoUrl ? (
-        <CountryLogo logoUrl={logoUrl} flag="" name={label} />
-      ) : (
-        <LeagueLogo logoUrl={null} label={label} />
-      )}
+      <LeagueLogo logoUrl={logoUrl ?? null} label={label} />
       {label}
     </button>
   );
@@ -390,7 +399,7 @@ function FilterSheet({
         onClick={onClose}
         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
       />
-      <div className="relative w-full rounded-t-2xl border-t border-white/10 bg-[#1c0b09] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl">
+      <div className="relative w-full rounded-t-2xl border-t border-white/10 bg-[#0F1E2E] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl">
         <div className="mb-5 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-white">Filtri</h2>
@@ -430,7 +439,7 @@ function FilterSheet({
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 h-12 w-full rounded-md bg-gradient-to-r from-red-500 to-red-600 text-sm font-bold text-white"
+          className="mt-6 h-12 w-full rounded-md bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] text-sm font-bold text-[#06111B]"
         >
           Mostra risultati
         </button>
@@ -458,7 +467,7 @@ function SheetSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 w-full appearance-none rounded-md border border-white/10 bg-[#150705] px-4 text-sm text-zinc-100 outline-none focus:border-red-500/40"
+        className="h-12 w-full appearance-none rounded-md border border-white/10 bg-[#101D2C] px-4 text-sm text-zinc-100 outline-none focus:border-[#22E6C3]/40"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -479,7 +488,7 @@ function TournamentLobbySkeleton() {
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}
-          className="flex h-[150px] animate-pulse overflow-hidden rounded-lg border border-white/8 bg-[#1c0b09]/50 lg:h-[280px] lg:flex-col"
+          className="flex h-[150px] animate-pulse overflow-hidden rounded-lg border border-white/8 bg-[#0F1E2E]/50 lg:h-[280px] lg:flex-col"
         >
           <div className="w-24 bg-white/6 lg:h-[100px] lg:w-full" />
           <div className="flex-1 space-y-3 p-4">

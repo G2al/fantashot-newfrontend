@@ -19,6 +19,7 @@ import {
 import { CustomDropdown, LeagueLogo } from "@/components/lobby/shared";
 import {
   BENCH_SLOT_KEYS,
+  type FantaTeamFormationEntry,
   type LineupPayload,
   type TournamentDetail,
   type TournamentModule,
@@ -28,15 +29,22 @@ import {
 export function TeamBuilder({
   tournament,
   mode,
+  viewTeam,
   onSaved,
   onCancel,
 }: {
   tournament: TournamentDetail;
-  mode: "create" | "edit";
-  onSaved: () => void | Promise<void>;
+  mode: "create" | "edit" | "view";
+  /** Richiesto solo per mode="view": formazione di un'altra squadra, sola lettura. */
+  viewTeam?: {
+    module_id: number;
+    formation_data: Record<string, FantaTeamFormationEntry>;
+  };
+  onSaved?: () => void | Promise<void>;
   onCancel: () => void;
 }) {
   const { token } = useAuth();
+  const isReadOnly = mode === "view";
   const selectablePlayers = useMemo(
     () => tournament.players.filter(isSelectablePlayer),
     [tournament.players]
@@ -45,7 +53,7 @@ export function TeamBuilder({
     () => buildTeamLogoMap(tournament.fixtures),
     [tournament.fixtures]
   );
-  const existingTeam = tournament.user_fanta_team;
+  const existingTeam = isReadOnly ? viewTeam : tournament.user_fanta_team;
   const savedPlayersById = useMemo(() => {
     const players = new Map<number, TournamentPlayer>();
 
@@ -69,7 +77,7 @@ export function TeamBuilder({
     tournament.modules.find((item) => item.id === moduleId) ??
     tournament.modules[0];
   const [lineup, setLineup] = useState<LineupPayload["lineup"]>(() =>
-    mode === "edit" && existingTeam
+    mode !== "create" && existingTeam
       ? buildLineupFromFormationData(existingTeam.formation_data)
       : {}
   );
@@ -79,7 +87,7 @@ export function TeamBuilder({
 
   if (!selectedModule) {
     return (
-      <div className="rounded-lg border border-amber-500/20 bg-amber-950/30 p-4 text-sm text-amber-200">
+      <div className="rounded-lg border border-red-500/20 bg-red-950/30 p-4 text-sm text-red-200">
         Nessun modulo disponibile per questo torneo.
       </div>
     );
@@ -96,6 +104,7 @@ export function TeamBuilder({
     (entry) => entry.is_captain
   ).length;
   const isComplete = missingSlots.length === 0 && captainCount === 1;
+  const hasAnyPlayer = Object.keys(lineup).length > 0;
 
   function findPlayer(playerId: number | undefined) {
     if (!playerId) return null;
@@ -150,6 +159,11 @@ export function TeamBuilder({
     setLineup(buildRandomLineup(selectedModule, selectablePlayers));
   }
 
+  function handleClear() {
+    setLineup({});
+    setError(null);
+  }
+
   async function handleSubmit() {
     if (!token) return;
     setError(null);
@@ -177,7 +191,7 @@ export function TeamBuilder({
         await updateTournamentTeam(tournament.id, payload, token);
       }
 
-      await onSaved();
+      if (onSaved) await onSaved();
     } catch (requestError) {
       setError(
         requestError instanceof ApiError
@@ -190,37 +204,61 @@ export function TeamBuilder({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-red-500/30 bg-[linear-gradient(145deg,#1c0b09_0%,#120605_58%,#1a0807_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
+    <div className="relative overflow-hidden rounded-xl border border-[#22E6C3]/30 bg-[linear-gradient(145deg,#0F1E2E_0%,#120605_58%,#1a0807_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-lg bg-red-500/12 text-red-500">
+          <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#22E6C3]/12 text-[#22E6C3]">
             <FormationIcon />
           </span>
           <div>
             <h2 className="text-base font-black uppercase tracking-wide text-white">
-              {mode === "create" ? "Crea formazione" : "Modifica formazione"}
+              {mode === "create"
+                ? "Crea formazione"
+                : mode === "edit"
+                  ? "Modifica formazione"
+                  : "Formazione"}
             </h2>
             <p className="mt-0.5 text-xs text-zinc-400">
-              Tocca uno slot per scegliere il giocatore
+              {isReadOnly
+                ? "Sola lettura"
+                : "Tocca uno slot per scegliere il giocatore"}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
-            Modulo
-          </span>
-          <ModuleSelect
-            modules={tournament.modules}
-            value={moduleId}
-            onChange={handleModuleChange}
+          {isReadOnly ? (
+            <span className="text-xs font-bold text-zinc-300">
+              {selectedModule.name}
+            </span>
+          ) : (
+            <>
+              <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+                Modulo
+              </span>
+              <ModuleSelect
+                modules={tournament.modules}
+                value={moduleId}
+                onChange={handleModuleChange}
+                disabled={isSubmitting}
+              />
+            </>
+          )}
+          <button
+            type="button"
+            onClick={onCancel}
             disabled={isSubmitting}
-          />
+            aria-label="Chiudi"
+            title="Chiudi"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/15 text-zinc-300 transition hover:border-[#22E6C3]/40 hover:bg-[#22E6C3]/10 hover:text-[#3AF5D4] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <CloseIcon />
+          </button>
         </div>
       </div>
 
-      <div className="grid xl:grid-cols-[minmax(0,1fr)_310px]">
-        <div className="min-w-0 xl:border-r xl:border-red-500/20">
+      <div className={isReadOnly ? "" : "grid xl:grid-cols-[minmax(0,1fr)_310px]"}>
+        <div className="min-w-0 xl:border-r xl:border-[#22E6C3]/20">
           <div className="relative mx-auto aspect-[4/3] w-full max-w-[1120px] xl:-mt-12">
             <PitchBackground />
 
@@ -238,6 +276,7 @@ export function TeamBuilder({
                   player={player}
                   teamLogoById={teamLogoById}
                   isCaptain={Boolean(assignment?.is_captain)}
+                  readOnly={isReadOnly}
                   onOpenPicker={() => setActiveSlot(slotKey)}
                   onToggleCaptain={() => handleToggleCaptain(slotKey)}
                   onRemove={() => handleRemovePlayer(slotKey)}
@@ -249,7 +288,7 @@ export function TeamBuilder({
           <div className="mx-3 mb-3 rounded-xl border border-white/10 bg-black/25 p-3 sm:mx-5 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-white">
-                <span className="text-red-500"><BenchIcon /></span>
+                <span className="text-[#22E6C3]"><BenchIcon /></span>
                 Panchina
               </p>
               <p className="text-[10px] text-zinc-500">{BENCH_SLOT_KEYS.length} slot per le riserve</p>
@@ -267,6 +306,7 @@ export function TeamBuilder({
                     teamLogoById={teamLogoById}
                     isCaptain={Boolean(assignment?.is_captain)}
                     size="bench"
+                    readOnly={isReadOnly}
                     onOpenPicker={() => setActiveSlot(slotKey)}
                     onToggleCaptain={() => handleToggleCaptain(slotKey)}
                     onRemove={() => handleRemovePlayer(slotKey)}
@@ -277,65 +317,23 @@ export function TeamBuilder({
           </div>
         </div>
 
-        <FormationSummary
-          tournament={tournament}
-          completed={completedStarterSlots}
-          total={starterSlotKeys.length}
-        />
-      </div>
-
-      {error ? (
-        <p className="mx-4 mt-4 rounded-lg border border-amber-500/20 bg-amber-950/60 px-4 py-3 text-sm text-amber-200 sm:mx-6">
-          {error}
-        </p>
-      ) : null}
-
-      <div className="flex flex-col gap-3 border-t border-white/10 bg-black/15 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${isComplete ? "bg-emerald-400" : "bg-amber-400"}`} />
-          <p className="text-xs font-semibold text-zinc-400">
-            {missingSlots.length
-              ? `${missingSlots.length} slot da completare`
-              : captainCount === 1
-                ? "Formazione completa"
-                : "Manca il capitano"}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 sm:flex">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="flex h-12 items-center justify-center rounded-lg border border-white/15 px-6 text-sm font-bold text-zinc-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-28"
-          >
-            Annulla
-          </button>
-          <button
-            type="button"
-            onClick={handleRandomize}
-            disabled={isSubmitting}
-            className="flex h-12 items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/[0.03] px-6 text-sm font-bold text-zinc-200 transition hover:border-red-500/40 hover:bg-red-500/5 disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-32"
-          >
-            <DiceIcon />
-            Casuale
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleSubmit()}
-            disabled={isSubmitting}
-            className="col-span-2 flex h-12 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-7 text-sm font-black uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(220,38,38,0.35)] transition hover:from-red-400 hover:to-red-500 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-56"
-          >
-            <SaveIcon />
-            {isSubmitting
-              ? mode === "create"
-                ? "Iscrizione in corso..."
-                : "Salvataggio..."
-              : mode === "create"
-                ? "Iscriviti e salva"
-                : "Salva formazione"}
-          </button>
-        </div>
+        {isReadOnly ? null : (
+          <FormationSummary
+            tournament={tournament}
+            completed={completedStarterSlots}
+            total={starterSlotKeys.length}
+            mode={mode}
+            isComplete={isComplete}
+            missingSlots={missingSlots.length}
+            captainCount={captainCount}
+            isSubmitting={isSubmitting}
+            error={error}
+            hasAnyPlayer={hasAnyPlayer}
+            onClear={handleClear}
+            onRandomize={handleRandomize}
+            onSubmit={() => void handleSubmit()}
+          />
+        )}
       </div>
 
       {activeSlot ? (
@@ -351,9 +349,9 @@ export function TeamBuilder({
       ) : null}
 
       {isSubmitting ? (
-        <div className="absolute inset-0 z-[70] flex items-center justify-center bg-[#0c0504]/80 px-6 text-center backdrop-blur-sm">
+        <div className="absolute inset-0 z-[70] flex items-center justify-center bg-[#06111B]/80 px-6 text-center backdrop-blur-sm">
           <div>
-            <span className="mx-auto block h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-red-500" />
+            <span className="mx-auto block h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-[#22E6C3]" />
             <p className="mt-4 text-sm font-black uppercase tracking-wide text-white">
               {mode === "create" ? "Iscrizione in corso" : "Salvataggio formazione"}
             </p>
@@ -405,22 +403,47 @@ function FormationSummary({
   tournament,
   completed,
   total,
+  mode,
+  isComplete,
+  missingSlots,
+  captainCount,
+  isSubmitting,
+  error,
+  hasAnyPlayer,
+  onClear,
+  onRandomize,
+  onSubmit,
 }: {
   tournament: TournamentDetail;
   completed: number;
   total: number;
+  mode: "create" | "edit" | "view";
+  isComplete: boolean;
+  missingSlots: number;
+  captainCount: number;
+  isSubmitting: boolean;
+  error: string | null;
+  hasAnyPlayer: boolean;
+  onClear: () => void;
+  onRandomize: () => void;
+  onSubmit: () => void;
 }) {
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
   const competition =
     tournament.leagues.length > 1
       ? `${tournament.leagues.length} campionati`
       : tournament.leagues[0]?.name ?? "Non assegnata";
+  const stageLabel = missingSlots
+    ? `${missingSlots} titolari da inserire`
+    : captainCount === 1
+      ? "Formazione pronta"
+      : "Squadra completa: scegli il capitano";
 
   return (
-    <aside className="border-t border-red-500/20 bg-black/15 p-4 sm:p-5 xl:border-t-0">
-      <div className="rounded-xl border border-red-500/25 bg-[linear-gradient(145deg,rgba(35,10,8,0.9),rgba(18,6,5,0.96))] p-4">
+    <aside className="border-t border-[#22E6C3]/20 bg-black/15 p-4 sm:p-5 xl:border-t-0">
+      <div className="rounded-xl border border-[#22E6C3]/25 bg-[linear-gradient(145deg,rgba(35,10,8,0.9),rgba(18,6,5,0.96))] p-4">
         <section>
-        <div className="flex items-center gap-2 text-red-500">
+        <div className="flex items-center gap-2 text-[#22E6C3]">
           <FormationIcon />
           <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-white">
             Stato formazione
@@ -429,26 +452,20 @@ function FormationSummary({
         <div className="mt-4 flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-red-600 to-red-400 transition-[width] duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-[#18C6A7] to-[#1ED8B7] transition-[width] duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
           <span className="text-sm font-black text-white">{completed}/{total}</span>
         </div>
-        <div className="mt-4 space-y-2 border-t border-white/10 pt-4 text-xs">
-          <div className="flex items-center justify-between gap-3 text-zinc-400">
-            <span className="flex items-center gap-2"><span className="h-4 w-4 rounded-full border border-zinc-600" />Slot da completare</span>
-            <strong className="text-white">{Math.max(0, total - completed)}</strong>
-          </div>
-          <div className="flex items-center justify-between gap-3 text-zinc-400">
-            <span className="flex items-center gap-2"><span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-500 text-[9px] font-black text-black">✓</span>Slot completati</span>
-            <strong className="text-white">{completed}</strong>
-          </div>
+        <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-4 text-xs">
+          <span className={`h-2 w-2 shrink-0 rounded-full ${isComplete ? "bg-[#1ED8B7]" : "bg-amber-400"}`} />
+          <p className="font-semibold text-zinc-300">{stageLabel}</p>
         </div>
         </section>
 
-        <section className="mt-5 border-t border-red-500/25 pt-5">
-        <div className="flex items-center gap-2 text-red-500">
+        <section className="mt-5 border-t border-[#22E6C3]/25 pt-5">
+        <div className="flex items-center gap-2 text-[#22E6C3]">
           <TrophyIcon />
           <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-white">
             Dettagli torneo
@@ -471,20 +488,63 @@ function FormationSummary({
           <div className="flex items-center justify-between gap-3">
             <dt className="text-zinc-400">Stato</dt>
             <dd className="flex items-center gap-2 text-right font-bold text-zinc-100">
-              <span className={`h-2.5 w-2.5 rounded-full ${tournament.status === "enrollments" ? "bg-emerald-500" : "bg-red-500"}`} />
+              <span className={`h-2.5 w-2.5 rounded-full ${tournament.status === "enrollments" ? "bg-[#22E6C3]" : "bg-zinc-500"}`} />
               {getTournamentStatusLabel(tournament.status)}
             </dd>
           </div>
         </dl>
         </section>
 
-        <div className="mt-5 rounded-xl border border-red-500/25 bg-red-950/20 p-4">
-          <p className="flex items-center gap-2 text-xs font-black text-red-400">
-            <span className="text-lg">ϟ</span>
-            Consiglio
-          </p>
-          <p className="mt-2 text-xs leading-5 text-zinc-400">
-            Scegli con attenzione la tua formazione. Potrai modificarla finché le iscrizioni sono aperte.
+        <div className="mt-5 rounded-xl border border-[#22E6C3]/25 bg-[#123A3B]/20 p-4">
+          {error ? (
+            <p className="mb-3 rounded-lg border border-red-500/20 bg-red-950/60 px-3 py-2 text-xs text-red-200">
+              {error}
+            </p>
+          ) : null}
+
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={onSubmit}
+              disabled={isSubmitting}
+              className="flex h-12 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] px-3 text-[13px] font-black uppercase text-[#06111B] shadow-[0_10px_30px_rgba(34,230,195,0.35)] transition hover:from-[#1ED8B7] hover:to-[#22E6C3] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <SaveIcon />
+              {isSubmitting
+                ? mode === "create"
+                  ? "Iscrizione in corso..."
+                  : "Salvataggio..."
+                : mode === "create"
+                  ? "Iscriviti e salva"
+                  : "Salva formazione"}
+            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onClear}
+                disabled={isSubmitting || !hasAnyPlayer}
+                aria-label="Svuota formazione"
+                title="Svuota formazione"
+                className="flex h-11 items-center justify-center rounded-lg border border-white/15 text-zinc-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <TrashIcon />
+              </button>
+              <button
+                type="button"
+                onClick={onRandomize}
+                disabled={isSubmitting}
+                aria-label="Formazione casuale"
+                title="Formazione casuale"
+                className="flex h-11 items-center justify-center rounded-lg border border-white/15 bg-white/[0.03] text-zinc-200 transition hover:border-[#22E6C3]/40 hover:bg-[#22E6C3]/5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <DiceIcon />
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-3 flex items-center gap-2 text-[11px] leading-5 text-zinc-500">
+            <span className="text-[#1ED8B7]">ϟ</span>
+            Potrai modificare la formazione finché le iscrizioni sono aperte.
           </p>
         </div>
       </div>
@@ -521,6 +581,7 @@ function PlayerCard({
   teamLogoById,
   isCaptain,
   size,
+  readOnly = false,
   onOpenPicker,
   onToggleCaptain,
   onRemove,
@@ -530,6 +591,7 @@ function PlayerCard({
   teamLogoById: Map<number, string>;
   isCaptain: boolean;
   size: "pitch" | "bench";
+  readOnly?: boolean;
   onOpenPicker: () => void;
   onToggleCaptain: () => void;
   onRemove: () => void;
@@ -547,14 +609,15 @@ function PlayerCard({
         <button
           type="button"
           onClick={onOpenPicker}
+          disabled={readOnly}
           aria-label={player ? player.display_name : getSlotLabel(slotKey)}
           className={`relative flex items-center justify-center overflow-hidden rounded-full text-[10px] font-black shadow-lg transition ${avatarSize} ${
             player
               ? isCaptain
-                ? "border-2 border-amber-400 bg-[#1c0b09] text-white"
-                : "border-2 border-white/80 bg-[#1c0b09] text-white"
+                ? "border-2 border-amber-400 bg-[#0F1E2E] text-white"
+                : "border-2 border-white/80 bg-[#0F1E2E] text-white"
               : "border-0 bg-transparent text-white hover:scale-105"
-          }`}
+          } ${readOnly ? "cursor-default disabled:opacity-100 hover:scale-100" : ""}`}
         >
           {player ? (
             player.image_path ? (
@@ -595,7 +658,7 @@ function PlayerCard({
         ) : null}
 
         {player && teamLogo ? (
-          <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-black/40 bg-[#0c0504] shadow">
+          <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-black/40 bg-[#06111B] shadow">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={teamLogo} alt="" className="h-full w-full object-contain p-0.5" />
           </span>
@@ -608,7 +671,7 @@ function PlayerCard({
         ) : null}
       </div>
 
-      {player ? (
+      {player && !readOnly ? (
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -627,7 +690,7 @@ function PlayerCard({
             type="button"
             onClick={onRemove}
             title="Rimuovi"
-            className="grid h-5 w-5 place-items-center rounded-full bg-white/10 text-white/50 hover:bg-red-500/20 hover:text-red-300"
+            className="grid h-5 w-5 place-items-center rounded-full bg-white/10 text-white/50 hover:bg-[#22E6C3]/20 hover:text-[#3AF5D4]"
           >
             <CloseIcon />
           </button>
@@ -668,6 +731,7 @@ function PitchSlot({
   player,
   teamLogoById,
   isCaptain,
+  readOnly = false,
   onOpenPicker,
   onToggleCaptain,
   onRemove,
@@ -678,6 +742,7 @@ function PitchSlot({
   player: TournamentPlayer | null;
   teamLogoById: Map<number, string>;
   isCaptain: boolean;
+  readOnly?: boolean;
   onOpenPicker: () => void;
   onToggleCaptain: () => void;
   onRemove: () => void;
@@ -693,6 +758,7 @@ function PitchSlot({
         teamLogoById={teamLogoById}
         isCaptain={isCaptain}
         size="pitch"
+        readOnly={readOnly}
         onOpenPicker={onOpenPicker}
         onToggleCaptain={onToggleCaptain}
         onRemove={onRemove}
@@ -740,10 +806,15 @@ function PlayerPickerModal({
         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
       />
 
-      <div className="relative flex max-h-[80vh] w-full max-w-md flex-col rounded-t-2xl border-t border-white/10 bg-[#1c0b09] p-5 shadow-2xl sm:rounded-2xl sm:border">
+      <div
+        onClick={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+        className="relative flex max-h-[80vh] w-full max-w-md flex-col rounded-t-2xl border-t border-white/10 bg-[#0F1E2E] p-5 shadow-2xl sm:rounded-2xl sm:border"
+      >
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-wide text-red-300">
+            <p className="text-[10px] font-black uppercase tracking-wide text-[#3AF5D4]">
               Scegli
             </p>
             <h3 className="text-base font-black text-white">
@@ -764,10 +835,15 @@ function PlayerPickerModal({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Cerca giocatore..."
-          className="mt-4 h-11 w-full rounded-full border border-white/10 bg-[#150705] px-4 text-sm text-zinc-100 outline-none focus:border-red-500/50"
+          className="mt-4 h-11 w-full rounded-full border border-white/10 bg-[#101D2C] px-4 text-sm text-zinc-100 outline-none focus:border-[#22E6C3]/50"
         />
 
-        <div className="mt-4 min-h-0 flex-1 space-y-1 overflow-y-auto">
+        <div
+          onClick={(event) => {
+            if (event.target === event.currentTarget) onClose();
+          }}
+          className="mt-4 min-h-0 flex-1 space-y-1 overflow-y-auto"
+        >
           {candidates.length ? (
             candidates.map((player) => {
               const teamLogo = player.teams[0]
@@ -781,7 +857,7 @@ function PlayerPickerModal({
                   onClick={() => onSelect(player)}
                   className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
                     player.id === currentPlayerId
-                      ? "bg-red-500/15 text-red-100"
+                      ? "bg-[#22E6C3]/15 text-[#E9FFFA]"
                       : "hover:bg-white/5"
                   }`}
                 >
@@ -799,7 +875,7 @@ function PlayerPickerModal({
                       </span>
                     )}
                     {teamLogo ? (
-                      <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center overflow-hidden rounded-full border border-black/40 bg-[#0c0504]">
+                      <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center overflow-hidden rounded-full border border-black/40 bg-[#06111B]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={teamLogo} alt="" className="h-full w-full object-contain p-0.5" />
                       </span>
@@ -871,6 +947,24 @@ function DiceIcon() {
       <circle cx="12" cy="12" r="1" fill="currentColor" />
       <circle cx="8" cy="16" r="1" fill="currentColor" />
       <circle cx="16" cy="16" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+      <path d="M10 11v6M14 11v6" />
     </svg>
   );
 }

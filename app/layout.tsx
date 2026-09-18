@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="it" className={`${geistSans.variable} ${geistMono.variable}`}>
       {/* Nessun contenitore qui: ogni gruppo di route decide la propria
           impaginazione, come in survivor-fe ((app) vs (standalone)). */}
-      <body className="bg-[#0c0504]">
+      <body className="bg-[#06111B]">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

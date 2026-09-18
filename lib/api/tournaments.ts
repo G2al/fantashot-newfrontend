@@ -4,7 +4,10 @@ import type {
   PaginatedResponse,
   Tournament,
   TournamentDetail,
+  TournamentRankingEntry,
+  TournamentTeamDetails,
 } from "@/types/tournament";
+
 
 /**
  * Pubblico, non serve token - ma se c'e' lo mandiamo comunque: e' quello che
@@ -42,6 +45,34 @@ export async function getAllTournaments(token?: string | null) {
 export async function getTournament(id: number, token?: string | null) {
   const response = await apiFetch<{ data: TournamentDetail }>(
     `/tournament/${id}`,
+    { token: token ?? undefined },
+  );
+
+  return response.data;
+}
+
+/**
+ * 403 con "Tournament has not started yet" finche' il torneo non e'
+ * in-progress/finished/paid - il chiamante deve gestire quell'errore
+ * separatamente per mostrare un messaggio dedicato invece di uno generico.
+ */
+export async function getTournamentTeamDetails(
+  tournamentId: number,
+  teamId: number,
+  token?: string | null
+) {
+  const response = await apiFetch<{ data: TournamentTeamDetails }>(
+    `/tournaments/${tournamentId}/fantateams/${teamId}/details`,
+    { token: token ?? undefined }
+  );
+
+  return response.data;
+}
+
+/** Pubblico, gia' ordinato per points decrescente lato server. */
+export async function getTournamentRanking(id: number, token?: string | null) {
+  const response = await apiFetch<{ data: TournamentRankingEntry[] }>(
+    `/tournaments/${id}/ranking`,
     { token: token ?? undefined },
   );
 

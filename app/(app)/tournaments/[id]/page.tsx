@@ -4,15 +4,30 @@ import Image from "next/image";
 import Link from "next/link";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { LeagueLogo } from "@/components/lobby/shared";
+import { RegolamentoContent } from "@/components/tournament/RegolamentoContent";
 import { TeamBuilder } from "@/components/tournament/TeamBuilder";
+import { TeamPreviewModal } from "@/components/tournament/TeamPreviewModal";
 import { useAuth } from "@/hooks/use-auth";
 import { useCountdown } from "@/hooks/use-countdown";
-import { getTournament } from "@/lib/api/tournaments";
+import { getTournament, getTournamentRanking } from "@/lib/api/tournaments";
 import { getMe } from "@/lib/auth-api";
 import { formatMoney, formatPrizePool } from "@/lib/format";
 import { logFrontendError } from "@/lib/frontend-logger";
 import { getModuleCounts } from "@/lib/tournament-team";
-import type { TournamentDetail, TournamentFixture } from "@/types/tournament";
+import type {
+  TournamentDetail,
+  TournamentFixture,
+  TournamentRankingEntry,
+} from "@/types/tournament";
+
+type DetailTab = "formazione" | "eventi" | "classifica" | "regolamento";
+
+const DETAIL_TABS: Array<{ value: DetailTab; label: string }> = [
+  { value: "formazione", label: "Formazione" },
+  { value: "eventi", label: "Eventi" },
+  { value: "classifica", label: "Classifica" },
+  { value: "regolamento", label: "Regolamento" },
+];
 
 export default function TournamentDetailPage({
   params,
@@ -27,6 +42,7 @@ export default function TournamentDetailPage({
   const [formationError, setFormationError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [activeTab, setActiveTab] = useState<DetailTab>("formazione");
   const hasInitializedBuilder = useRef(false);
 
   const reload = useCallback(
@@ -94,14 +110,14 @@ export default function TournamentDetailPage({
     <div className="py-4 lg:py-5">
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-2 text-sm font-medium text-red-300 transition hover:text-red-200"
+        className="inline-flex items-center gap-2 text-sm font-medium text-[#3AF5D4] transition hover:text-[#E9FFFA]"
       >
         <ArrowLeftIcon />
         Torna ai tornei
       </Link>
 
       {error ? (
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-950/35 px-5 py-4 text-sm text-amber-200">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/20 bg-red-950/35 px-5 py-4 text-sm text-red-200">
           <span>{error}</span>
           <RetryButton
             isLoading={isRefreshing}
@@ -112,7 +128,7 @@ export default function TournamentDetailPage({
         <TournamentDetailSkeleton />
       ) : (
         <div className="mt-4 space-y-4">
-          <article className="relative min-h-[168px] overflow-hidden rounded-xl border border-red-500/30 bg-[#1c0b09] shadow-[0_22px_60px_rgba(0,0,0,0.32)]">
+          <article className="relative min-h-[168px] overflow-hidden rounded-xl border border-[#22E6C3]/30 bg-[#0F1E2E] shadow-[0_22px_60px_rgba(0,0,0,0.32)]">
             <Image
               src="/images/banner-torneo.png"
               alt=""
@@ -121,11 +137,11 @@ export default function TournamentDetailPage({
               sizes="(min-width: 1680px) 1620px, 100vw"
               className="pointer-events-none object-cover object-center"
             />
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(12,5,4,0.42)_0%,rgba(12,5,4,0.08)_58%,rgba(12,5,4,0.28)_100%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(6,17,27,0.42)_0%,rgba(6,17,27,0.08)_58%,rgba(6,17,27,0.28)_100%)]" />
 
             <div className="relative grid min-h-[168px] gap-6 p-5 pt-16 sm:p-7 sm:pt-16 lg:grid-cols-[minmax(280px,0.85fr)_minmax(520px,1.4fr)] lg:items-center lg:pt-7">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-red-400">
+                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#1ED8B7]">
                   Fantashot
                 </p>
                 <h1 className="mt-1 truncate text-3xl font-black tracking-tight text-white sm:text-4xl">
@@ -166,78 +182,257 @@ export default function TournamentDetailPage({
             </div>
           </article>
 
-          <section className="rounded-xl border border-red-500/25 bg-[linear-gradient(135deg,rgba(48,12,10,0.86),rgba(21,7,5,0.96))] p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-white">
-                <CalendarIcon />
-                Eventi del torneo ({tournament.fixtures.length})
-              </h2>
-              <p className="text-xs text-zinc-500">Partite valide per questo torneo</p>
+          <section className="overflow-hidden rounded-2xl border border-[#22E6C3]/25 bg-gradient-to-b from-[#123A3B]/20 to-[#0F1E2E]/80 shadow-[0_0_0_1px_rgba(34,230,195,0.08)]">
+            <div className="border-b border-white/10 bg-black/15 p-3 sm:p-4">
+              <TournamentDetailTabs activeTab={activeTab} onChange={setActiveTab} />
             </div>
-            <div className="mt-3 grid gap-2 lg:grid-cols-2">
-              {tournament.fixtures.length ? (
-                tournament.fixtures.map((fixture) => (
-                  <FixtureRow key={fixture.id} fixture={fixture} />
-                ))
+
+            <div
+              className={
+                activeTab === "formazione" && isBuilding ? "" : "p-5 sm:p-7"
+              }
+            >
+              {activeTab === "formazione" ? (
+                formationError ? (
+                  <FormationSyncError
+                    message={formationError}
+                    isLoading={isRefreshing}
+                    onRetry={() => void reload()}
+                  />
+                ) : isBuilding ? (
+                  <TeamBuilder
+                    tournament={tournament}
+                    mode={tournament.is_user_registered ? "edit" : "create"}
+                    onCancel={() => setIsBuilding(false)}
+                    onSaved={async () => {
+                      const isNewEnrollment = !tournament.is_user_registered;
+                      const walletRefresh =
+                        isNewEnrollment && token
+                          ? getMe(token)
+                              .then(({ user, wallets }) => {
+                                setUser({ ...user, wallets });
+                              })
+                              .catch((requestError) => {
+                                logFrontendError(
+                                  "Aggiornamento del saldo dopo l'iscrizione non riuscito",
+                                  { tournamentId },
+                                  requestError
+                                );
+                              })
+                          : Promise.resolve();
+
+                      await Promise.all([reload(), walletRefresh]);
+                      setIsBuilding(false);
+                    }}
+                  />
+                ) : (
+                  <EnrollmentPanel
+                    tournament={tournament}
+                    isAuthenticated={isAuthenticated}
+                    onStart={() => setIsBuilding(true)}
+                  />
+                )
+              ) : activeTab === "eventi" ? (
+                <div>
+                  <p className="mb-4 text-xs text-zinc-500">
+                    {tournament.fixtures.length} partite valide per questo torneo
+                  </p>
+                  {tournament.fixtures.length ? (
+                    <div className="space-y-5">
+                      {groupFixturesByLeague(tournament.fixtures).map((group) => (
+                        <div key={group.league.id}>
+                          <div className="mb-2 flex items-center gap-2 border-b border-white/10 pb-2">
+                            <LeagueLogo logoUrl={group.league.logo} label={group.league.name} />
+                            <h3 className="text-sm font-black text-white">
+                              {group.league.name}
+                            </h3>
+                            <span className="text-xs text-zinc-500">
+                              ({group.fixtures.length})
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            {group.fixtures.map((fixture) => (
+                              <FixtureRow key={fixture.id} fixture={fixture} />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-zinc-500">
+                      Nessun evento assegnato ancora a questo torneo.
+                    </p>
+                  )}
+                </div>
+              ) : activeTab === "classifica" ? (
+                <ClassificaPanel
+                  key={tournamentId}
+                  tournament={tournament}
+                  token={token}
+                  ownTeamId={tournament.user_fanta_team?.id}
+                />
               ) : (
-                <p className="text-sm text-zinc-500">
-                  Nessun evento assegnato ancora a questo torneo.
-                </p>
+                <RegolamentoContent />
               )}
             </div>
           </section>
-
-          {/* Iscrizione / formazione: e' il blocco "azione", deve staccarsi
-              visivamente dal resto che e' solo informativo. */}
-          <section
-            className={
-              isBuilding
-                ? ""
-                : "overflow-hidden rounded-2xl border border-red-500/25 bg-gradient-to-b from-red-950/20 to-[#1c0b09]/80 p-5 shadow-[0_0_0_1px_rgba(220,38,38,0.08)] sm:p-7"
-            }
-          >
-            {formationError ? (
-              <FormationSyncError
-                message={formationError}
-                isLoading={isRefreshing}
-                onRetry={() => void reload()}
-              />
-            ) : isBuilding ? (
-              <TeamBuilder
-                tournament={tournament}
-                mode={tournament.is_user_registered ? "edit" : "create"}
-                onCancel={() => setIsBuilding(false)}
-                onSaved={async () => {
-                  const isNewEnrollment = !tournament.is_user_registered;
-                  const walletRefresh =
-                    isNewEnrollment && token
-                      ? getMe(token)
-                          .then(({ user, wallets }) => {
-                            setUser({ ...user, wallets });
-                          })
-                          .catch((requestError) => {
-                            logFrontendError(
-                              "Aggiornamento del saldo dopo l'iscrizione non riuscito",
-                              { tournamentId },
-                              requestError
-                            );
-                          })
-                      : Promise.resolve();
-
-                  await Promise.all([reload(), walletRefresh]);
-                  setIsBuilding(false);
-                }}
-              />
-            ) : (
-              <EnrollmentPanel
-                tournament={tournament}
-                isAuthenticated={isAuthenticated}
-                onStart={() => setIsBuilding(true)}
-              />
-            )}
-          </section>
         </div>
       )}
+    </div>
+  );
+}
+
+function TournamentDetailTabs({
+  activeTab,
+  onChange,
+}: {
+  activeTab: DetailTab;
+  onChange: (tab: DetailTab) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-black/30 p-1 sm:grid-cols-4">
+      {DETAIL_TABS.map((tab) => (
+        <button
+          key={tab.value}
+          type="button"
+          onClick={() => onChange(tab.value)}
+          className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition sm:text-sm ${
+            activeTab === tab.value
+              ? "bg-[#22E6C3] text-[#06111B] shadow-[0_0_18px_rgba(34,230,195,0.35)]"
+              : "text-zinc-400 hover:text-[#E9FFFA]"
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ClassificaPanel({
+  tournament,
+  token,
+  ownTeamId,
+}: {
+  tournament: TournamentDetail;
+  token: string | null;
+  ownTeamId?: number;
+}) {
+  const tournamentId = tournament.id;
+  const [entries, setEntries] = useState<TournamentRankingEntry[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [previewTeamId, setPreviewTeamId] = useState<number | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    getTournamentRanking(tournamentId, token)
+      .then((data) => {
+        if (isActive) setEntries(data);
+      })
+      .catch((requestError) => {
+        if (!isActive) return;
+        logFrontendError(
+          "Caricamento della classifica non riuscito",
+          { tournamentId },
+          requestError
+        );
+        setError("Impossibile caricare la classifica.");
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [tournamentId, token]);
+
+  if (error) {
+    return (
+      <p className="rounded-lg border border-red-500/20 bg-red-950/35 px-4 py-3 text-sm text-red-200">
+        {error}
+      </p>
+    );
+  }
+
+  if (!entries) {
+    return (
+      <div className="space-y-2" aria-label="Caricamento classifica">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="h-14 animate-pulse rounded-xl bg-white/5" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!entries.length) {
+    return (
+      <p className="py-10 text-center text-sm text-zinc-500">
+        Nessuna fantasquadra ancora in classifica.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {entries.map((entry, index) => {
+        const position = index + 1;
+        const isOwn = entry.id === ownTeamId;
+
+        return (
+          <button
+            key={entry.id}
+            type="button"
+            onClick={() => setPreviewTeamId(entry.id)}
+            className={`flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition hover:border-[#22E6C3]/30 ${
+              isOwn
+                ? "border-[#22E6C3]/40 bg-[#123A3B]/25"
+                : "border-white/10 bg-black/20"
+            }`}
+          >
+            <span
+              className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-black ${
+                position <= 3
+                  ? "bg-amber-400 text-black"
+                  : "bg-white/10 text-zinc-300"
+              }`}
+            >
+              {position}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-white">
+                {entry.name}
+                {isOwn ? (
+                  <span className="ml-2 text-[10px] font-black uppercase tracking-wide text-[#3AF5D4]">
+                    Tu
+                  </span>
+                ) : null}
+              </p>
+              {entry.user.username || entry.user.name ? (
+                <p className="truncate text-xs text-zinc-500">
+                  {entry.user.username ?? entry.user.name}
+                </p>
+              ) : null}
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-base font-black text-white">
+                {entry.points} pt
+              </p>
+              {entry.captain_points ? (
+                <p className="text-[10px] text-zinc-500">
+                  +{entry.captain_points} capitano
+                </p>
+              ) : null}
+            </div>
+          </button>
+        );
+      })}
+
+      {previewTeamId ? (
+        <TeamPreviewModal
+          tournament={tournament}
+          teamId={previewTeamId}
+          onClose={() => setPreviewTeamId(null)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -254,10 +449,10 @@ function FormationSyncError({
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <p className="text-xs font-black uppercase tracking-wide text-amber-300">
+        <p className="text-xs font-black uppercase tracking-wide text-red-300">
           Formazione non sincronizzata
         </p>
-        <p className="mt-1 max-w-2xl text-sm leading-6 text-amber-100/80">
+        <p className="mt-1 max-w-2xl text-sm leading-6 text-red-100/80">
           {message}
         </p>
       </div>
@@ -278,7 +473,7 @@ function RetryButton({
       type="button"
       onClick={onRetry}
       disabled={isLoading}
-      className="flex h-10 items-center rounded-lg border border-amber-400/30 px-4 text-xs font-black uppercase tracking-wide text-amber-200 transition hover:bg-amber-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex h-10 items-center rounded-lg border border-red-400/30 px-4 text-xs font-black uppercase tracking-wide text-red-200 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {isLoading ? "Sincronizzazione..." : "Riprova"}
     </button>
@@ -306,7 +501,7 @@ function EnrollmentPanel({
         </p>
         <Link
           href="/login"
-          className="mt-3 inline-flex h-11 items-center rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-5 text-sm font-black uppercase tracking-wide text-white"
+          className="mt-3 inline-flex h-11 items-center rounded-lg bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] px-5 text-sm font-black uppercase tracking-wide text-[#06111B]"
         >
           Accedi
         </Link>
@@ -323,11 +518,11 @@ function EnrollmentPanel({
     return (
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-300">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#22E6C3]/15 text-[#3AF5D4]">
             <CheckIcon />
           </span>
           <div>
-            <p className="text-xs font-black uppercase tracking-wide text-emerald-300">
+            <p className="text-xs font-black uppercase tracking-wide text-[#3AF5D4]">
               Sei iscritto
             </p>
             <h2 className="text-lg font-black text-white">{team.name}</h2>
@@ -343,7 +538,7 @@ function EnrollmentPanel({
           <button
             type="button"
             onClick={onStart}
-            className="flex h-11 items-center rounded-lg border border-red-500/40 px-5 text-sm font-black uppercase tracking-wide text-red-200 transition hover:bg-red-500/10"
+            className="flex h-11 items-center rounded-lg border border-[#22E6C3]/40 px-5 text-sm font-black uppercase tracking-wide text-[#E9FFFA] transition hover:bg-[#22E6C3]/10"
           >
             Modifica formazione
           </button>
@@ -367,7 +562,7 @@ function EnrollmentPanel({
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <p className="text-xs font-black uppercase tracking-wide text-red-300">
+        <p className="text-xs font-black uppercase tracking-wide text-[#3AF5D4]">
           Consegna la squadra entro
         </p>
         <p className="mt-1 font-mono text-3xl font-black text-white">
@@ -378,7 +573,7 @@ function EnrollmentPanel({
       <button
         type="button"
         onClick={onStart}
-        className="flex h-12 items-center rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-6 text-sm font-black uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(220,38,38,0.35)] transition hover:from-red-400 hover:to-red-500"
+        className="flex h-12 items-center rounded-lg bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] px-6 text-sm font-black uppercase tracking-wide text-[#06111B] shadow-[0_10px_30px_rgba(34,230,195,0.35)] transition hover:from-[#1ED8B7] hover:to-[#22E6C3]"
       >
         Crea la formazione · Quota {formatMoney(tournament.buy_in)}
       </button>
@@ -394,7 +589,7 @@ function StatusBadge({ status }: { status: TournamentDetail["status"] }) {
       className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-black uppercase tracking-wide ${
         status === "cancelled"
           ? "bg-zinc-800/70 text-zinc-500 line-through decoration-zinc-600"
-          : "bg-red-500/15 text-red-200 ring-1 ring-red-500/30"
+          : "bg-[#22E6C3]/15 text-[#E9FFFA] ring-1 ring-[#22E6C3]/30"
       }`}
     >
       {isLive ? <span className="h-2 w-2 animate-pulse rounded-full bg-current" /> : null}
@@ -410,7 +605,7 @@ function EnrollmentCountdown({ endDate }: { endDate: string }) {
 
   return (
     <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-zinc-200 backdrop-blur-sm">
-      <span className="text-red-400"><CalendarIcon /></span>
+      <span className="text-[#1ED8B7]"><CalendarIcon /></span>
       Chiude tra <span className="font-mono text-white">{countdown}</span>
     </div>
   );
@@ -427,7 +622,7 @@ function StatTile({
 }) {
   return (
     <div className="flex min-w-0 items-center gap-2.5 px-3 py-2 sm:px-6">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-500/10 text-red-400">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#22E6C3]/10 text-[#1ED8B7]">
         {icon}
       </span>
       <div className="min-w-0">
@@ -440,9 +635,27 @@ function StatTile({
   );
 }
 
+function groupFixturesByLeague(fixtures: TournamentFixture[]) {
+  const groups = new Map<
+    number,
+    { league: TournamentFixture["league"]; fixtures: TournamentFixture[] }
+  >();
+
+  fixtures.forEach((fixture) => {
+    const existing = groups.get(fixture.league.id);
+    if (existing) {
+      existing.fixtures.push(fixture);
+    } else {
+      groups.set(fixture.league.id, { league: fixture.league, fixtures: [fixture] });
+    }
+  });
+
+  return Array.from(groups.values());
+}
+
 function FixtureRow({ fixture }: { fixture: TournamentFixture }) {
   return (
-    <div className="flex min-h-[78px] items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 transition hover:border-red-500/30 hover:bg-red-950/15 sm:px-4">
+    <div className="flex min-h-[78px] items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 transition hover:border-[#22E6C3]/30 hover:bg-[#123A3B]/15 sm:px-4">
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
         <LeagueLogo logoUrl={fixture.league.logo} label={fixture.league.name} />
         <div className="min-w-0 flex-1">
@@ -519,7 +732,7 @@ function TournamentDetailSkeleton() {
   return (
     <div
       aria-label="Caricamento torneo"
-      className="mt-5 animate-pulse overflow-hidden rounded-2xl border border-white/8 bg-[#1c0b09]/75"
+      className="mt-5 animate-pulse overflow-hidden rounded-2xl border border-white/8 bg-[#0F1E2E]/75"
     >
       <div className="h-44 bg-white/[0.035]" />
       <div className="grid grid-cols-3 divide-x divide-white/8">

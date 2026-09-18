@@ -22,7 +22,7 @@ const STRENGTH_BAR_CLASSNAME: Record<PasswordStrengthLevel, string> = {
   1: "bg-red-400",
   2: "bg-amber-300",
   3: "bg-orange-400",
-  4: "bg-emerald-400",
+  4: "bg-green-500",
 };
 
 const STRENGTH_TEXT_CLASSNAME: Record<PasswordStrengthLevel, string> = {
@@ -30,7 +30,7 @@ const STRENGTH_TEXT_CLASSNAME: Record<PasswordStrengthLevel, string> = {
   1: "text-red-300",
   2: "text-amber-200",
   3: "text-orange-300",
-  4: "text-emerald-300",
+  4: "text-green-400",
 };
 
 const REQUIREMENT_LABEL: Record<PasswordRequirementId, string> = {
@@ -113,7 +113,7 @@ export function PasswordStrength({
           <li
             key={requirement.id}
             className={`flex items-center gap-2 text-xs transition-colors ${
-              requirement.met ? "text-emerald-300" : "text-zinc-500"
+              requirement.met ? "text-green-400" : "text-zinc-500"
             }`}
           >
             <RequirementMark met={requirement.met} />
@@ -131,7 +131,7 @@ function RequirementMark({ met }: { met: boolean }) {
       aria-hidden="true"
       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition ${
         met
-          ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-300"
+          ? "border-green-400/60 bg-green-400/15 text-green-400"
           : "border-white/15 text-transparent"
       }`}
     >

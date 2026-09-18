@@ -51,6 +51,8 @@ export type Tournament = {
   updated_at: string;
   /** Vuoto finche' non hanno fixture assegnate. Puo' contenerne piu' di una. */
   leagues: League[];
+  /** Null se il torneo non ha una copertina caricata da Filament. */
+  cover_image_url: string | null;
 };
 
 export type TournamentModuleSchema = Record<string, { x: number; y: number }>;
@@ -176,6 +178,48 @@ export type TournamentDetail = Tournament & {
   user_fanta_team?: UserFantaTeam;
   /** Calcolato dal backend: stato torneo + scadenza iscrizioni gia' incrociati. */
   is_editable?: boolean;
+};
+
+export type TournamentRankingUser = {
+  id?: number;
+  name?: string;
+  username?: string;
+  avatar?: string | null;
+};
+
+/**
+ * Il backend non restituisce una posizione: e' l'indice nell'array (+1),
+ * gia' ordinato per points decrescente lato server.
+ */
+export type TournamentRankingEntry = {
+  id: number;
+  name: string;
+  points: number;
+  penalties_points: number;
+  captain_points: number;
+  user: TournamentRankingUser;
+  tournament_id: number;
+  module_id: number;
+};
+
+/**
+ * Risposta di GET /tournaments/{id}/fantateams/{teamId}/details - stesso
+ * formato di formation_data usato in UserFantaTeam, con in piu' utente e
+ * modulo esteso. Disponibile solo a torneo avviato (403 prima).
+ */
+export type TournamentTeamDetails = {
+  id: number;
+  name: string;
+  module_id: number;
+  formation_data: Record<string, FantaTeamFormationEntry>;
+  points: number;
+  penalties_points: number;
+  captain_points: number;
+  user: {
+    id: number;
+    name: string;
+  };
+  module: TournamentModule;
 };
 
 export type PaginatedResponse<T> = {

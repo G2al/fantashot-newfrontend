@@ -75,9 +75,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative left-1/2 w-screen -translate-x-1/2 bg-[#0c0504] text-zinc-50 lg:-mb-32 lg:-mt-8">
+    <div className="relative left-1/2 w-screen -translate-x-1/2 bg-[#06111B] text-zinc-50 lg:-mb-32 lg:-mt-8">
       <section className="mx-auto flex min-h-screen max-w-lg items-center px-5 py-12">
-        <div className="w-full rounded-2xl border border-white/10 bg-[#1c0b09]/88 px-6 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:px-10 sm:py-12">
+        <div className="w-full rounded-2xl border border-white/10 bg-[#0F1E2E]/88 px-6 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:px-10 sm:py-12">
           <div className="flex flex-col items-center">
             <Image
               src="/images/logo-fantashot.png"
@@ -110,7 +110,7 @@ export default function LoginPage() {
                 autoCapitalize="none"
                 spellCheck={false}
                 placeholder="La tua email"
-                className="w-full rounded-lg border border-white/10 bg-[#150705] px-4 py-3.5 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                className="w-full rounded-lg border border-white/10 bg-[#101D2C] px-4 py-3.5 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-[#22E6C3] focus:ring-2 focus:ring-[#22E6C3]/20"
               />
             </div>
 
@@ -131,7 +131,7 @@ export default function LoginPage() {
                 defaultChecked={false}
                 className="peer sr-only"
               />
-              <span className="flex h-5 w-5 flex-none items-center justify-center rounded-md border border-white/20 bg-[#150705] text-transparent transition peer-checked:border-red-500 peer-checked:bg-red-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-red-500/40">
+              <span className="flex h-5 w-5 flex-none items-center justify-center rounded-md border border-white/20 bg-[#101D2C] text-transparent transition peer-checked:border-[#22E6C3] peer-checked:bg-[#22E6C3] peer-checked:text-[#06111B] peer-focus-visible:ring-2 peer-focus-visible:ring-[#22E6C3]/40">
                 <CheckIcon />
               </span>
               <span className="text-sm text-zinc-300">Ricordami</span>
@@ -146,7 +146,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-4 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-[0_10px_28px_rgba(220,38,38,0.28)] transition hover:from-red-400 hover:to-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] px-4 py-3.5 text-sm font-black uppercase tracking-wide text-[#06111B] shadow-[0_10px_28px_rgba(34,230,195,0.28)] transition hover:from-[#1ED8B7] hover:to-[#22E6C3] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? "Accesso in corso..." : "Accedi"}
             </button>
@@ -156,7 +156,7 @@ export default function LoginPage() {
             Non hai un account?{" "}
             <Link
               href="/register"
-              className="font-semibold text-red-400 transition hover:text-red-300"
+              className="font-semibold text-[#1ED8B7] transition hover:text-[#3AF5D4]"
             >
               Registrati
             </Link>
@@ -195,13 +195,13 @@ function PasswordInput({
           required
           autoComplete={autoComplete}
           placeholder="••••••••"
-          className="w-full rounded-lg border border-white/10 bg-[#150705] px-4 py-3.5 pr-12 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+          className="w-full rounded-lg border border-white/10 bg-[#101D2C] px-4 py-3.5 pr-12 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-[#22E6C3] focus:ring-2 focus:ring-[#22E6C3]/20"
         />
         <button
           type="button"
           onClick={onToggle}
           aria-label={isVisible ? "Nascondi password" : "Mostra password"}
-          className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-400 transition hover:text-red-300"
+          className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-400 transition hover:text-[#3AF5D4]"
         >
           {isVisible ? <EyeOffIcon /> : <EyeIcon />}
         </button>

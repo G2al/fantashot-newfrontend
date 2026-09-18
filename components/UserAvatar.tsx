@@ -25,7 +25,7 @@ export function UserAvatar({
 
   return (
     <span
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-red-400/20 bg-[#241110] font-bold uppercase text-red-100 ${className}`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#1ED8B7]/20 bg-[#123A3B] font-bold uppercase text-[#E9FFFA] ${className}`}
       aria-label={name}
     >
       {resolvedSrc ? (

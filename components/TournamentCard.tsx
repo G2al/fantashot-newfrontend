@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCountdown } from "@/hooks/use-countdown";
+import { resolveApiAssetUrl } from "@/lib/api";
 import { formatMoney, formatPrizePool } from "@/lib/format";
 import { LeagueLogo } from "@/components/lobby/shared";
 import type { Tournament, TournamentStatus } from "@/types/tournament";
@@ -26,18 +27,30 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
   );
   const primaryLeague = tournament.leagues[0] ?? null;
   const isMultiLeague = tournament.leagues.length > 1;
+  const coverUrl = resolveApiAssetUrl(tournament.cover_image_url);
 
   return (
-    <article className="group flex min-h-[132px] overflow-hidden rounded-lg border border-white/10 bg-[#1c0b09]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 hover:-translate-y-0.5 hover:border-red-500/30 hover:shadow-[0_18px_52px_rgba(220,38,38,0.12)] lg:min-h-0 lg:flex-col">
-      <div className="relative flex w-[96px] shrink-0 items-center justify-center overflow-hidden border-r border-white/8 bg-[radial-gradient(circle_at_50%_40%,rgba(220,38,38,0.2),rgba(17,7,7,0.92)_72%)] lg:h-[132px] lg:w-full lg:border-b lg:border-r-0">
-        <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:22px_22px]" />
-        {primaryLeague ? (
-          <div className="relative rounded-2xl border border-white/10 bg-black/20 p-3 shadow-xl lg:p-4">
-            <LeagueLogo
-              logoUrl={primaryLeague.logo}
-              label={primaryLeague.name}
-              large
-            />
+    <article className="group flex min-h-[132px] overflow-hidden rounded-lg border border-white/10 bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 hover:-translate-y-0.5 hover:border-[#22E6C3]/30 hover:shadow-[0_18px_52px_rgba(34,230,195,0.12)] lg:min-h-0 lg:flex-col">
+      <div className="relative flex w-[96px] shrink-0 items-center justify-center overflow-hidden border-r border-white/8 bg-[radial-gradient(circle_at_50%_40%,rgba(34,230,195,0.2),rgba(17,7,7,0.92)_72%)] lg:h-[132px] lg:w-full lg:border-b lg:border-r-0">
+        {coverUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- host della copertina variabile per ambiente, evitiamo il whitelisting di next/image */}
+            <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/25 to-black/60" />
+          </>
+        ) : (
+          <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:22px_22px]" />
+        )}
+        {tournament.leagues.length ? (
+          <div className="relative flex flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-black/30 p-2.5 shadow-xl backdrop-blur-sm lg:gap-2 lg:p-3">
+            {tournament.leagues.map((league) => (
+              <LeagueLogo
+                key={league.id}
+                logoUrl={league.logo}
+                label={league.name}
+                large={!isMultiLeague}
+              />
+            ))}
           </div>
         ) : (
           <Image
@@ -50,7 +63,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
         )}
 
         <span
-          className={`absolute left-2 top-2 hidden rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide lg:block ${getStatusBadgeClassName(
+          className={`absolute left-2 top-2 hidden rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide shadow-lg lg:block ${getStatusBadgeClassName(
             tournament.status,
           )}`}
         >
@@ -61,7 +74,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
       <div className="flex min-w-0 flex-1 flex-col p-3.5 lg:p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-red-300/80">
+            <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-[#22E6C3]">
               {isMultiLeague
                 ? `Multi-campionato · ${tournament.leagues.length} leghe`
                 : (primaryLeague?.name ?? "Campionato da definire")}
@@ -71,7 +84,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             </h2>
           </div>
           <span
-            className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-wide lg:hidden ${getStatusBadgeClassName(
+            className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide shadow lg:hidden ${getStatusBadgeClassName(
               tournament.status,
             )}`}
           >
@@ -96,7 +109,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             {countdown ? (
               <p className="truncate">
                 Chiusura tra{" "}
-                <span className="font-mono font-semibold text-red-300">
+                <span className="font-mono font-semibold text-[#22E6C3]">
                   {countdown}
                 </span>
               </p>
@@ -109,8 +122,8 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             href={`/tournaments/${tournament.id}`}
             className={`flex h-9 shrink-0 items-center justify-center rounded-md px-3 text-xs font-bold transition ${
               tournament.is_user_registered
-                ? "border border-emerald-400/35 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"
-                : "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-[0_8px_24px_rgba(220,38,38,0.25)] hover:from-red-400 hover:to-red-500"
+                ? "border border-[#1ED8B7]/35 bg-[#22E6C3]/10 text-[#E9FFFA] hover:bg-[#22E6C3]/20"
+                : "bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] text-[#06111B] shadow-[0_8px_24px_rgba(34,230,195,0.25)] hover:from-[#1ED8B7] hover:to-[#22E6C3]"
             }`}
           >
             {getActionLabel(tournament)}
@@ -156,16 +169,16 @@ function getStatusHint(status: TournamentStatus) {
 
 function getStatusBadgeClassName(status: TournamentStatus) {
   if (status === "enrollments") {
-    return "bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/20";
+    return "bg-[#22E6C3] text-white";
   }
   if (status === "in-progress") {
-    return "bg-red-600 text-white";
+    return "bg-[#18C6A7] text-white";
   }
   if (status === "waiting-for-start" || status === "ready") {
-    return "bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/20";
+    return "bg-amber-400 text-black";
   }
   if (status === "cancelled") {
-    return "bg-zinc-800/60 text-zinc-500 line-through decoration-zinc-600";
+    return "bg-zinc-700 text-zinc-300 line-through decoration-zinc-500";
   }
-  return "bg-zinc-800/90 text-zinc-300 ring-1 ring-white/10";
+  return "bg-zinc-700 text-zinc-100";
 }

@@ -56,7 +56,7 @@ export function CustomDropdown({
         type="button"
         onClick={() => setIsOpen((current) => !current)}
         disabled={disabled}
-        className={`flex w-full items-center gap-2 rounded-md border border-white/10 bg-[#1c0b09]/90 text-sm outline-none transition hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-60 ${buttonClassName ?? ""}`}
+        className={`flex w-full items-center gap-2 rounded-md border border-white/10 bg-[#0F1E2E]/90 text-sm outline-none transition hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-60 ${buttonClassName ?? ""}`}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
@@ -72,7 +72,7 @@ export function CustomDropdown({
       {isOpen ? (
         <div
           role="listbox"
-          className="absolute right-0 z-50 mt-2 min-w-full overflow-hidden rounded-md border border-white/10 bg-[#1c0b09] p-1 shadow-[0_18px_50px_rgba(0,0,0,0.5)]"
+          className="absolute right-0 z-50 mt-2 min-w-full overflow-hidden rounded-md border border-white/10 bg-[#0F1E2E] p-1 shadow-[0_18px_50px_rgba(0,0,0,0.5)]"
         >
           {options.map((option) => {
             const isSelected = option.value === value;
@@ -89,7 +89,7 @@ export function CustomDropdown({
                 }}
                 className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm transition ${
                   isSelected
-                    ? "bg-red-500/20 text-red-200"
+                    ? "bg-[#22E6C3]/20 text-[#E9FFFA]"
                     : "text-zinc-300 hover:bg-white/6 hover:text-white"
                 }`}
               >

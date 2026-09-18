@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getMe, logout } from "@/lib/auth-api";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -22,6 +22,33 @@ export function AppShell({ children }: { children: ReactNode }) {
     useAuth();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) {
+      return;
+    }
+
+    function closeOnOutsideClick(event: PointerEvent) {
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("pointerdown", closeOnOutsideClick);
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      window.removeEventListener("pointerdown", closeOnOutsideClick);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isProfileMenuOpen]);
 
   useEffect(() => {
     if (isReady && !isAuthenticated) {
@@ -55,8 +82,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (!isReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0c0504]">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-red-400" />
+      <div className="flex min-h-screen items-center justify-center bg-[#06111B]">
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-[#1ED8B7]" />
       </div>
     );
   }
@@ -82,8 +109,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0504] text-zinc-50">
-      <header className="flex h-16 items-center justify-between gap-3 border-b border-white/10 bg-[#0c0504]/95 px-4 backdrop-blur sm:px-6">
+    <div className="min-h-screen bg-[#06111B] text-zinc-50">
+      <header className="relative z-40 flex h-16 items-center justify-between gap-3 border-b border-white/10 bg-[#06111B]/95 px-4 backdrop-blur sm:px-6">
         <Link href="/dashboard" aria-label="Vai alla dashboard" className="relative block h-9 w-36">
           <Image
             src="/images/logo-fantashot.png"
@@ -96,16 +123,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
 
         <div className="flex items-center gap-3">
-          <div className="hidden h-10 items-center gap-2 rounded-full border border-white/10 bg-[#1c0b09] px-3 text-sm font-bold text-red-300 sm:flex">
-            <WalletIcon />
+          <div className="hidden h-10 items-center gap-2 rounded-full border border-white/10 bg-[#0F1E2E] px-3 text-sm font-bold text-white sm:flex">
+            <span className="text-[#22E6C3]">
+              <WalletIcon />
+            </span>
             {formatWalletTotal(user?.wallets)}
           </div>
 
-          <div className="relative">
+          <div ref={profileMenuRef} className="relative">
             <button
               type="button"
               onClick={() => setIsProfileMenuOpen((current) => !current)}
-              className="flex h-11 items-center gap-2 rounded-full border border-white/10 bg-[#1c0b09] pl-1 pr-3 transition hover:border-red-500/40"
+              className="flex h-11 items-center gap-2 rounded-full border border-white/10 bg-[#0F1E2E] pl-1 pr-3 transition hover:border-[#22E6C3]/40"
               aria-label="Menu profilo"
               aria-expanded={isProfileMenuOpen}
             >
@@ -116,21 +145,21 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
 
             {isProfileMenuOpen ? (
-              <div className="absolute right-0 top-[52px] z-30 w-56 rounded-lg border border-white/10 bg-[#1c0b09] p-2 shadow-2xl">
+              <div className="absolute right-0 top-[52px] z-30 w-56 rounded-lg border border-white/10 bg-[#0F1E2E] p-2 shadow-2xl">
                 <div className="border-b border-white/8 px-3 py-2">
                   <p className="truncate text-sm font-semibold text-zinc-100">
                     {user?.name ?? "Utente"}
                   </p>
                   <p className="truncate text-xs text-zinc-500">{user?.email}</p>
                 </div>
-                <p className="px-3 py-2 text-xs text-red-300 sm:hidden">
+                <p className="px-3 py-2 text-xs font-bold text-white sm:hidden">
                   {formatWalletTotal(user?.wallets)}
                 </p>
                 <button
                   type="button"
                   onClick={() => void handleLogout()}
                   disabled={isLoggingOut}
-                  className="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-red-200 transition hover:bg-red-500/10 disabled:opacity-60"
+                  className="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-[#E9FFFA] transition hover:bg-[#22E6C3]/10 disabled:opacity-60"
                 >
                   {isLoggingOut ? "Uscita..." : "Esci"}
                 </button>

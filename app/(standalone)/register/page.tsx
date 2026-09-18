@@ -100,9 +100,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative left-1/2 w-screen -translate-x-1/2 bg-[#0c0504] text-zinc-50 lg:-mb-32 lg:-mt-8">
+    <div className="relative left-1/2 w-screen -translate-x-1/2 bg-[#06111B] text-zinc-50 lg:-mb-32 lg:-mt-8">
       <section className="mx-auto flex min-h-screen max-w-lg items-center px-5 py-12">
-        <div className="w-full rounded-2xl border border-white/10 bg-[#1c0b09]/88 px-6 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:px-10 sm:py-12">
+        <div className="w-full rounded-2xl border border-white/10 bg-[#0F1E2E]/88 px-6 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:px-10 sm:py-12">
           <div className="flex flex-col items-center">
             <Image
               src="/images/logo-fantashot.png"
@@ -134,8 +134,8 @@ export default function RegisterPage() {
                 autoComplete="name"
                 placeholder="Il tuo nome"
                 aria-invalid={Boolean(fieldErrors.name)}
-                className={`w-full rounded-lg border bg-[#150705] px-4 py-3.5 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 ${
-                  fieldErrors.name ? "border-red-400/50" : "border-white/10"
+                className={`w-full rounded-lg border bg-[#101D2C] px-4 py-3.5 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-[#22E6C3] focus:ring-2 focus:ring-[#22E6C3]/20 ${
+                  fieldErrors.name ? "border-red-500/50" : "border-white/10"
                 }`}
               />
               {fieldErrors.name ? (
@@ -171,8 +171,8 @@ export default function RegisterPage() {
                 aria-describedby={
                   fieldErrors.username ? "username-error" : "username-hint"
                 }
-                className={`w-full rounded-lg border bg-[#150705] px-4 py-3.5 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 ${
-                  fieldErrors.username ? "border-red-400/50" : "border-white/10"
+                className={`w-full rounded-lg border bg-[#101D2C] px-4 py-3.5 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-[#22E6C3] focus:ring-2 focus:ring-[#22E6C3]/20 ${
+                  fieldErrors.username ? "border-red-500/50" : "border-white/10"
                 }`}
               />
               {fieldErrors.username ? (
@@ -184,7 +184,7 @@ export default function RegisterPage() {
                   id="username-hint"
                   className={`text-xs transition-colors ${
                     isUsernameValid(username)
-                      ? "text-emerald-300"
+                      ? "text-green-400"
                       : "text-zinc-500"
                   }`}
                 >
@@ -210,7 +210,7 @@ export default function RegisterPage() {
                 placeholder="nome@esempio.it"
                 aria-invalid={Boolean(fieldErrors.email)}
                 aria-describedby={fieldErrors.email ? "email-error" : undefined}
-                className="w-full rounded-lg border border-white/10 bg-[#150705] px-4 py-3.5 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                className="w-full rounded-lg border border-white/10 bg-[#101D2C] px-4 py-3.5 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-[#22E6C3] focus:ring-2 focus:ring-[#22E6C3]/20"
               />
               {fieldErrors.email ? (
                 <p id="email-error" className="text-sm text-red-300">
@@ -267,7 +267,7 @@ export default function RegisterPage() {
                 !isUsernameValid(username) ||
                 !name.trim()
               }
-              className="flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-4 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-[0_10px_28px_rgba(220,38,38,0.28)] transition hover:from-red-400 hover:to-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] px-4 py-3.5 text-sm font-black uppercase tracking-wide text-[#06111B] shadow-[0_10px_28px_rgba(34,230,195,0.28)] transition hover:from-[#1ED8B7] hover:to-[#22E6C3] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? "Creazione in corso..." : "Crea account"}
             </button>
@@ -277,7 +277,7 @@ export default function RegisterPage() {
             Hai gia un account?{" "}
             <Link
               href="/login"
-              className="font-semibold text-red-400 transition hover:text-red-300"
+              className="font-semibold text-[#1ED8B7] transition hover:text-[#3AF5D4]"
             >
               Accedi
             </Link>
@@ -345,13 +345,13 @@ function PasswordInput({
           autoComplete={autoComplete}
           aria-describedby={describedBy}
           placeholder="••••••••"
-          className="w-full rounded-lg border border-white/10 bg-[#150705] px-4 py-3.5 pr-12 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+          className="w-full rounded-lg border border-white/10 bg-[#101D2C] px-4 py-3.5 pr-12 text-base text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-[#22E6C3] focus:ring-2 focus:ring-[#22E6C3]/20"
         />
         <button
           type="button"
           onClick={onToggle}
           aria-label={isVisible ? "Nascondi password" : "Mostra password"}
-          className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-400 transition hover:text-red-300"
+          className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-400 transition hover:text-[#3AF5D4]"
         >
           {isVisible ? <EyeOffIcon /> : <EyeIcon />}
         </button>
