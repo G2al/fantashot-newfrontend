@@ -499,7 +499,11 @@ export function TeamBuilder({
       ) : null}
 
       {isSubmitting ? (
-        <div className="absolute inset-0 z-[70] flex items-center justify-center bg-[#06111B]/80 px-6 text-center backdrop-blur-sm">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-[90] flex min-h-[100dvh] items-center justify-center bg-[#06111B]/88 px-6 text-center backdrop-blur-sm sm:absolute sm:z-[70] sm:min-h-0"
+        >
           <div>
             <span className="mx-auto block h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-[#22E6C3]" />
             <p className="mt-4 text-sm font-black uppercase tracking-wide text-white">
@@ -817,7 +821,7 @@ function PlayerCard({
               ? isCaptain
                 ? "border-2 border-amber-400 bg-[#0F1E2E] text-white"
                 : "border-2 border-[#22E6C3] bg-[#0F1E2E] text-white"
-              : "border-0 bg-transparent text-white hover:scale-105"
+              : `${getMobileEmptySlotClass(slotKey)} hover:scale-105 sm:border-0 sm:bg-transparent sm:text-white sm:shadow-lg`
           } ${readOnly ? "cursor-default disabled:opacity-100 hover:scale-100" : ""}`}
         >
           {player ? (
@@ -839,9 +843,12 @@ function PlayerCard({
                 width={128}
                 height={128}
                 aria-hidden="true"
-                className="absolute inset-0 h-full w-full object-contain"
+                className="absolute inset-0 hidden h-full w-full object-contain sm:block"
               />
-              <span className="absolute bottom-[10%] left-1/2 z-10 -translate-x-1/2 scale-75 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+              <span className="absolute inset-0 z-10 grid place-items-center text-white sm:hidden">
+                <PlusIcon />
+              </span>
+              <span className="absolute bottom-[10%] left-1/2 z-10 hidden -translate-x-1/2 scale-75 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] sm:block">
                 <PlusIcon />
               </span>
             </>
@@ -854,7 +861,7 @@ function PlayerCard({
             alt={getSlotLabel(slotKey)}
             width={32}
             height={32}
-            className="absolute -left-1.5 -top-1.5 z-20 h-5 w-5 drop-shadow-lg sm:-left-2 sm:-top-2 sm:h-7 sm:w-7"
+            className="absolute -left-1.5 -top-1.5 z-20 hidden h-5 w-5 drop-shadow-lg sm:-left-2 sm:-top-2 sm:block sm:h-7 sm:w-7"
           />
         ) : null}
 
@@ -898,24 +905,23 @@ function PlayerCard({
         </div>
       ) : null}
 
-      <span
-        className={`max-w-14 truncate rounded-full px-1.5 py-0.5 text-center text-[8px] font-bold leading-tight sm:max-w-[88px] sm:px-2 sm:text-[10px] ${!player && size === "pitch" ? "hidden sm:inline-block" : ""} ${
-          player
-            ? "bg-black/80 text-white drop-shadow"
-            : size === "pitch"
-              ? "bg-black/75 text-white"
-              : "text-white/70"
-        }`}
-      >
-        {player ? (
+      {player ? (
+        <span className="max-w-14 truncate rounded-full bg-black/80 px-1.5 py-0.5 text-center text-[8px] font-bold leading-tight text-white drop-shadow sm:max-w-[88px] sm:px-2 sm:text-[10px]">
           <>
             <span className="sm:hidden">{getSurname(player.display_name)}</span>
             <span className="hidden sm:inline">{player.display_name}</span>
           </>
-        ) : (
-          getSlotLabel(slotKey)
-        )}
-      </span>
+        </span>
+      ) : (
+        <>
+          <span className={`flex h-5 min-w-12 items-center justify-center rounded-md px-2 text-[10px] font-black sm:hidden ${getMobileRolePillClass(slotKey)}`}>
+            {getRoleShortLabel(slotKey)}
+          </span>
+          <span className="hidden max-w-[88px] truncate rounded-full bg-black/75 px-2 py-0.5 text-center text-[10px] font-bold leading-tight text-white sm:inline-block">
+            {getSlotLabel(slotKey)}
+          </span>
+        </>
+      )}
     </div>
   );
 }
@@ -930,6 +936,41 @@ function getRoleAsset(slotKey: string) {
     ATTACKER: "/images/roles/attacker.svg",
     COACH: "/images/roles/attacker.svg",
   }[role];
+}
+
+function getRoleShortLabel(slotKey: string) {
+  return {
+    GOALKEEPER: "P",
+    DEFENDER: "D",
+    MIDFIELDER: "C",
+    ATTACKER: "A",
+    COACH: "A",
+  }[getRequiredPositionForSlot(slotKey)];
+}
+
+function getMobileRolePillClass(slotKey: string) {
+  return {
+    GOALKEEPER: "bg-[#F6C343] text-white",
+    DEFENDER: "bg-[#3B82F6] text-white",
+    MIDFIELDER: "bg-[#22C55E] text-white",
+    ATTACKER: "bg-[#EF4444] text-white",
+    COACH: "bg-[#EF4444] text-white",
+  }[getRequiredPositionForSlot(slotKey)];
+}
+
+function getMobileEmptySlotClass(slotKey: string) {
+  return {
+    GOALKEEPER:
+      "border-2 border-[#F6C343] bg-[#0F1E2E] text-white shadow-[0_0_10px_rgba(246,195,67,0.45)]",
+    DEFENDER:
+      "border-2 border-[#3B82F6] bg-[#0F1E2E] text-white shadow-[0_0_10px_rgba(59,130,246,0.45)]",
+    MIDFIELDER:
+      "border-2 border-[#22C55E] bg-[#0F1E2E] text-white shadow-[0_0_10px_rgba(34,197,94,0.45)]",
+    ATTACKER:
+      "border-2 border-[#EF4444] bg-[#0F1E2E] text-white shadow-[0_0_10px_rgba(239,68,68,0.45)]",
+    COACH:
+      "border-2 border-[#EF4444] bg-[#0F1E2E] text-white shadow-[0_0_10px_rgba(239,68,68,0.45)]",
+  }[getRequiredPositionForSlot(slotKey)];
 }
 
 function PitchSlot({
