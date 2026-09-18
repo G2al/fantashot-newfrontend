@@ -828,6 +828,16 @@ function getTournamentStatusLabel(status: TournamentDetail["status"]) {
   }[status];
 }
 
+/** Formatta i punti del giocatore senza zeri decimali inutili. */
+function formatPlayerPoints(points: number): string {
+  if (!Number.isFinite(points)) return "0";
+
+  return new Intl.NumberFormat("it-IT", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(points);
+}
+
 /** Card giocatore condivisa tra campo e panchina, solo taglia diversa. */
 function PlayerCard({
   slotKey,
