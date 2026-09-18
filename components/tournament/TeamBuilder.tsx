@@ -907,13 +907,11 @@ function PitchBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(72,19,14,0.34),transparent_68%)]">
       <div className="absolute inset-x-[8%] bottom-[7%] top-[13%] bg-[radial-gradient(ellipse_at_center,rgba(16,185,44,0.2),transparent_65%)] blur-2xl" />
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element -- asset sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
+      <img
         src="/images/tournament-pitch.png"
         alt="Campo da calcio Fantashot"
-        fill
-        sizes="(min-width: 1280px) 1100px, 100vw"
-        priority
-        className="object-contain"
+        className="absolute inset-0 h-full w-full object-contain"
       />
     </div>
   );

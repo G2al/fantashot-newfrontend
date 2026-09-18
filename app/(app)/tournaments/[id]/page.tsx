@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { LeagueLogo } from "@/components/lobby/shared";
@@ -129,13 +128,11 @@ export default function TournamentDetailPage({
       ) : (
         <div className="mt-4 space-y-4">
           <article className="relative min-h-[168px] overflow-hidden rounded-xl border border-[#22E6C3]/30 bg-[#0F1E2E] shadow-[0_22px_60px_rgba(0,0,0,0.32)]">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element -- asset sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
+            <img
               src="/images/banner-torneo.png"
               alt=""
-              fill
-              priority
-              sizes="(min-width: 1680px) 1620px, 100vw"
-              className="pointer-events-none object-cover object-center"
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
             />
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(6,17,27,0.42)_0%,rgba(6,17,27,0.08)_58%,rgba(6,17,27,0.28)_100%)]" />
 

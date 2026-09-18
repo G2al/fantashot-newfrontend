@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
@@ -79,12 +78,10 @@ export default function LoginPage() {
       <section className="mx-auto flex min-h-screen max-w-lg items-center px-5 py-12">
         <div className="w-full rounded-2xl border border-white/10 bg-[#0F1E2E]/88 px-6 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:px-10 sm:py-12">
           <div className="flex flex-col items-center">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element -- asset di brand sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
+            <img
               src="/images/logo-fantashot.png"
               alt="Fantashot"
-              width={260}
-              height={87}
-              priority
               className="h-auto w-64"
             />
             <h1 className="mt-8 text-2xl font-black uppercase tracking-wide text-zinc-50">

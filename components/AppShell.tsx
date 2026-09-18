@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -112,13 +111,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-[#06111B] text-zinc-50">
       <header className="relative z-40 flex h-16 items-center justify-between gap-3 border-b border-white/10 bg-[#06111B]/95 px-4 backdrop-blur sm:px-6">
         <Link href="/dashboard" aria-label="Vai alla dashboard" className="relative block h-9 w-36">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element -- asset di brand sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
+          <img
             src="/images/logo-fantashot.png"
             alt="Fantashot"
-            fill
-            sizes="144px"
-            priority
-            className="object-contain object-left"
+            className="h-full w-full object-contain object-left"
           />
         </Link>
 

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { TournamentCard } from "@/components/TournamentCard";
 import { CustomDropdown, LeagueLogo } from "@/components/lobby/shared";
@@ -70,13 +69,11 @@ export function TournamentLobby() {
   return (
     <div className="py-4 lg:py-5">
       <div className="relative min-h-[160px] overflow-hidden rounded-2xl border border-white/10 bg-[#0F1E2E] sm:min-h-[190px]">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element -- asset sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
+        <img
           src="/images/banner-torneo.png"
           alt=""
-          fill
-          priority
-          sizes="(min-width: 1680px) 1620px, 100vw"
-          className="pointer-events-none object-cover object-center"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(6,17,27,0.92)_0%,rgba(6,17,27,0.55)_45%,rgba(6,17,27,0.15)_100%)]" />
 
