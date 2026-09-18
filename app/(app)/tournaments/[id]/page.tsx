@@ -127,7 +127,7 @@ export default function TournamentDetailPage({
         <TournamentDetailSkeleton />
       ) : (
         <div className="mt-4 space-y-4">
-          <article className="relative min-h-[168px] overflow-hidden rounded-xl border border-[#22E6C3]/30 bg-[#0F1E2E] shadow-[0_22px_60px_rgba(0,0,0,0.32)]">
+          <article className="relative min-h-[128px] overflow-hidden rounded-xl border border-[#1E3448] bg-[#0F1E2E] shadow-[0_22px_60px_rgba(0,0,0,0.32)] sm:min-h-[168px] sm:border-[#22E6C3]/30">
             {/* eslint-disable-next-line @next/next/no-img-element -- asset sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
             <img
               src="/images/banner-torneo.png"
@@ -136,7 +136,7 @@ export default function TournamentDetailPage({
             />
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(6,17,27,0.42)_0%,rgba(6,17,27,0.08)_58%,rgba(6,17,27,0.28)_100%)]" />
 
-            <div className="relative grid min-h-[168px] gap-6 p-5 pt-16 sm:p-7 sm:pt-16 lg:grid-cols-[minmax(280px,0.85fr)_minmax(520px,1.4fr)] lg:items-center lg:pt-7">
+            <div className="relative grid min-h-[128px] gap-4 p-4 pt-12 sm:min-h-[168px] sm:gap-6 sm:p-7 sm:pt-16 lg:grid-cols-[minmax(280px,0.85fr)_minmax(520px,1.4fr)] lg:items-center lg:pt-7">
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#1ED8B7]">
                   Fantashot
@@ -144,7 +144,7 @@ export default function TournamentDetailPage({
                 <h1 className="mt-1 truncate text-3xl font-black tracking-tight text-white sm:text-4xl">
                   {tournament.title}
                 </h1>
-                <p className="mt-1.5 line-clamp-2 text-sm text-zinc-400">
+                <p className="mt-1.5 hidden text-sm text-zinc-400 sm:line-clamp-2">
                   {tournament.description}
                 </p>
                 {tournament.leagues.length ? (
@@ -164,29 +164,41 @@ export default function TournamentDetailPage({
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-3 divide-x divide-white/15 lg:pr-3">
+              <div className="grid grid-cols-3 gap-2 lg:pr-3">
                 <StatTile icon={<TrophyIcon />} label="Montepremi" value={formatPrizePool(tournament.prize_pool)} />
                 <StatTile icon={<CoinIcon />} label="Quota" value={formatMoney(tournament.buy_in)} />
                 <StatTile icon={<UsersIcon />} label="Partecipanti" value={`${tournament.enrolled_users_count}/${tournament.max_participants}`} />
               </div>
             </div>
 
-            <div className="absolute right-4 top-4 flex flex-col items-end gap-2 sm:right-5 sm:top-5">
-              <StatusBadge status={tournament.status} />
-              {tournament.status === "enrollments" ? (
-                <EnrollmentCountdown endDate={tournament.enrollments_end_date} />
-              ) : null}
+            <div className="absolute right-3 top-3 sm:right-5 sm:top-5">
+              <div className="sm:hidden">
+                <MobileStatusLine
+                  status={tournament.status}
+                  endDate={
+                    tournament.status === "enrollments"
+                      ? tournament.enrollments_end_date
+                      : null
+                  }
+                />
+              </div>
+              <div className="hidden flex-col items-end gap-2 sm:flex">
+                <StatusBadge status={tournament.status} />
+                {tournament.status === "enrollments" ? (
+                  <EnrollmentCountdown endDate={tournament.enrollments_end_date} />
+                ) : null}
+              </div>
             </div>
           </article>
 
-          <section className="overflow-hidden rounded-2xl border border-[#22E6C3]/25 bg-gradient-to-b from-[#123A3B]/20 to-[#0F1E2E]/80 shadow-[0_0_0_1px_rgba(34,230,195,0.08)]">
-            <div className="border-b border-white/10 bg-black/15 p-3 sm:p-4">
+          <section className="overflow-visible rounded-2xl border border-[#1E3448] bg-gradient-to-b from-[#123A3B]/20 to-[#0F1E2E]/80 shadow-[0_0_0_1px_rgba(34,230,195,0.08)] sm:overflow-hidden sm:border-[#22E6C3]/25">
+            <div className="sticky top-0 z-30 rounded-t-2xl border-b border-white/10 bg-[#0A1420]/95 p-2 backdrop-blur sm:static sm:rounded-none sm:bg-black/15 sm:p-4">
               <TournamentDetailTabs activeTab={activeTab} onChange={setActiveTab} />
             </div>
 
             <div
               className={
-                activeTab === "formazione" && isBuilding ? "" : "p-5 sm:p-7"
+                activeTab === "formazione" && isBuilding ? "" : "p-3 sm:p-7"
               }
             >
               {activeTab === "formazione" ? (
@@ -293,9 +305,9 @@ function TournamentDetailTabs({
           key={tab.value}
           type="button"
           onClick={() => onChange(tab.value)}
-          className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition sm:text-sm ${
+          className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition sm:py-2 sm:text-sm ${
             activeTab === tab.value
-              ? "bg-[#22E6C3] text-[#06111B] shadow-[0_0_18px_rgba(34,230,195,0.35)]"
+              ? "bg-[#18C6A7] text-[#06111B] shadow-[0_0_12px_rgba(24,198,167,0.3)] sm:bg-[#22E6C3] sm:shadow-[0_0_18px_rgba(34,230,195,0.35)]"
               : "text-zinc-400 hover:text-[#E9FFFA]"
           }`}
         >
@@ -608,6 +620,32 @@ function EnrollmentCountdown({ endDate }: { endDate: string }) {
   );
 }
 
+/** Su mobile badge stato + countdown diventano un'unica riga, per non occupare due pill separate sopra l'hero. */
+function MobileStatusLine({
+  status,
+  endDate,
+}: {
+  status: TournamentDetail["status"];
+  endDate: string | null;
+}) {
+  const isLive = status === "enrollments" || status === "in-progress";
+  const countdown = useCountdown(endDate);
+
+  return (
+    <span
+      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide ${
+        status === "cancelled"
+          ? "border-transparent bg-zinc-800/70 text-zinc-500 line-through decoration-zinc-600"
+          : "border-[#22E6C3] bg-[#123A3B] text-[#22E6C3]"
+      }`}
+    >
+      {isLive ? <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current animate-pulse" /> : null}
+      {getStatusLabel(status)}
+      {countdown ? <span className="font-mono text-white">{countdown}</span> : null}
+    </span>
+  );
+}
+
 function StatTile({
   icon,
   label,
@@ -618,15 +656,15 @@ function StatTile({
   value: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-2.5 px-3 py-2 sm:px-6">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#22E6C3]/10 text-[#1ED8B7]">
+    <div className="flex min-w-0 flex-col items-center gap-1 px-1 py-2 text-center sm:flex-row sm:items-center sm:gap-2.5 sm:px-4 sm:text-left">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-[#1D6D68] bg-[#123A3B] text-[#3AF5D4] sm:h-9 sm:w-9">
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="truncate text-[10px] font-medium text-zinc-400">
+        <p className="text-[9px] font-medium leading-tight text-zinc-400 sm:text-[10px]">
           {label}
         </p>
-        <p className="truncate text-base font-black text-white sm:text-xl">{value}</p>
+        <p className="truncate text-sm font-black text-white sm:text-xl">{value}</p>
       </div>
     </div>
   );
@@ -652,26 +690,83 @@ function groupFixturesByLeague(fixtures: TournamentFixture[]) {
 
 function FixtureRow({ fixture }: { fixture: TournamentFixture }) {
   return (
-    <div className="flex min-h-[78px] items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 transition hover:border-[#22E6C3]/30 hover:bg-[#123A3B]/15 sm:px-4">
-      <div className="flex min-w-0 flex-1 items-center gap-2.5">
-        <LeagueLogo logoUrl={fixture.league.logo} label={fixture.league.name} />
-        <div className="min-w-0 flex-1">
-          <p className="mb-1 truncate text-[10px] font-medium text-zinc-400">
-            {fixture.league.name}
-          </p>
-          <div className="flex min-w-0 items-center gap-2.5">
-            <TeamBadge name={fixture.home_team.name} logo={fixture.home_team.logo} />
-            <span className="shrink-0 text-[9px] font-black uppercase text-zinc-600">vs</span>
-            <TeamBadge name={fixture.away_team.name} logo={fixture.away_team.logo} />
-          </div>
+    <div className="rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 transition hover:border-[#22E6C3]/30 hover:bg-[#123A3B]/15 sm:min-h-[78px] sm:px-4">
+      {/* Mobile: nomi squadra centrati e per intero, niente logo campionato ripetuto (gia' nell'intestazione del gruppo sopra). */}
+      <div className="sm:hidden">
+        <div className="flex items-center justify-end gap-2">
+          <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-400">
+            <CalendarIcon />
+            <FixtureDateInline value={fixture.start_date} />
+          </span>
+        </div>
+        <div className="mt-2.5 flex flex-col items-center gap-1.5 text-center">
+          <span className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
+            <span className="h-6 w-6 shrink-0 rounded-full bg-white/5 p-0.5">
+              {fixture.home_team.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={fixture.home_team.logo} alt="" className="h-full w-full object-contain" />
+              ) : null}
+            </span>
+            {fixture.home_team.name}
+          </span>
+          <span className="text-[9px] font-black uppercase text-zinc-600">vs</span>
+          <span className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
+            <span className="h-6 w-6 shrink-0 rounded-full bg-white/5 p-0.5">
+              {fixture.away_team.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={fixture.away_team.logo} alt="" className="h-full w-full object-contain" />
+              ) : null}
+            </span>
+            {fixture.away_team.name}
+          </span>
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-3 border-l border-white/10 pl-3">
-        <span className="text-zinc-500"><CalendarIcon /></span>
-        <FixtureDate value={fixture.start_date} />
-        <span className="text-xl leading-none text-zinc-500">›</span>
+
+      {/* Desktop: layout originale invariato. */}
+      <div className="hidden items-center justify-between gap-3 sm:flex">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <LeagueLogo logoUrl={fixture.league.logo} label={fixture.league.name} />
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 truncate text-[10px] font-medium text-zinc-400">
+              {fixture.league.name}
+            </p>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <TeamBadge name={fixture.home_team.name} logo={fixture.home_team.logo} />
+              <span className="shrink-0 text-[9px] font-black uppercase text-zinc-600">vs</span>
+              <TeamBadge name={fixture.away_team.name} logo={fixture.away_team.logo} />
+            </div>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-3 border-l border-white/10 pl-3">
+          <span className="text-zinc-500"><CalendarIcon /></span>
+          <FixtureDate value={fixture.start_date} />
+          <span className="text-xl leading-none text-zinc-500">›</span>
+        </div>
       </div>
     </div>
+  );
+}
+
+function FixtureDateInline({ value }: { value: string }) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return <span>{value}</span>;
+  }
+
+  return (
+    <span className="whitespace-nowrap">
+      {new Intl.DateTimeFormat("it-IT", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+      }).format(date)}{" "}
+      ·{" "}
+      {new Intl.DateTimeFormat("it-IT", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date)}
+    </span>
   );
 }
 

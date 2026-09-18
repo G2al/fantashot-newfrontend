@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { ApiError } from "@/lib/api";
 import { subscribeToTournament, updateTournamentTeam } from "@/lib/api/tournaments";
 import { formatMoney, formatPrizePool } from "@/lib/format";
@@ -21,6 +22,7 @@ import {
   BENCH_SLOT_KEYS,
   type FantaTeamFormationEntry,
   type LineupPayload,
+  type PlayerPosition,
   type TournamentDetail,
   type TournamentModule,
   type TournamentPlayer,
@@ -45,6 +47,7 @@ export function TeamBuilder({
 }) {
   const { token } = useAuth();
   const isReadOnly = mode === "view";
+  const isMobile = !useMediaQuery("(min-width: 640px)");
   const selectablePlayers = useMemo(
     () => tournament.players.filter(isSelectablePlayer),
     [tournament.players]
@@ -82,6 +85,7 @@ export function TeamBuilder({
       : {}
   );
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
+  const [actionSheetSlot, setActionSheetSlot] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -164,6 +168,32 @@ export function TeamBuilder({
     setError(null);
   }
 
+  /**
+   * Su mobile, toccare un giocatore GIA' assegnato apre un menu contestuale
+   * (sostituisci/capitano/rimuovi) invece del picker diretto, per non dover
+   * mostrare stella e X sempre visibili sopra ogni slot (troppo rumore su
+   * schermi stretti). Su desktop, o su uno slot vuoto, si apre subito il picker.
+   */
+  function handleAvatarTap(slotKey: string, hasPlayer: boolean) {
+    if (isMobile && hasPlayer && !isReadOnly) {
+      setActionSheetSlot(slotKey);
+    } else {
+      setActiveSlot(slotKey);
+    }
+  }
+
+  function handlePickerRoleChange(position: PlayerPosition) {
+    const matchingSlots = allSlotKeys.filter(
+      (slotKey) => getRequiredPositionForSlot(slotKey) === position
+    );
+    const targetSlot =
+      matchingSlots.find((slotKey) => !lineup[slotKey]) ?? matchingSlots[0];
+
+    if (targetSlot) {
+      setActiveSlot(targetSlot);
+    }
+  }
+
   async function handleSubmit() {
     if (!token) return;
     setError(null);
@@ -204,7 +234,7 @@ export function TeamBuilder({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-[#22E6C3]/30 bg-[linear-gradient(145deg,#0F1E2E_0%,#0A1420_58%,#06111B_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
+    <div className="relative overflow-hidden rounded-xl border border-[#1E3448] bg-[linear-gradient(145deg,#0F1E2E_0%,#0A1420_58%,#06111B_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)] sm:border-[#22E6C3]/30">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:px-6">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#22E6C3]/12 text-[#22E6C3]">
@@ -277,7 +307,7 @@ export function TeamBuilder({
                   teamLogoById={teamLogoById}
                   isCaptain={Boolean(assignment?.is_captain)}
                   readOnly={isReadOnly}
-                  onOpenPicker={() => setActiveSlot(slotKey)}
+                  onOpenPicker={() => handleAvatarTap(slotKey, Boolean(player))}
                   onToggleCaptain={() => handleToggleCaptain(slotKey)}
                   onRemove={() => handleRemovePlayer(slotKey)}
                 />
@@ -293,24 +323,25 @@ export function TeamBuilder({
               </p>
               <p className="text-[10px] text-zinc-500">{BENCH_SLOT_KEYS.length} slot per le riserve</p>
             </div>
-            <div className="scrollbar-hide flex justify-between gap-3 overflow-x-auto pb-1">
+            <div className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 sm:justify-between sm:snap-none">
               {BENCH_SLOT_KEYS.map((slotKey) => {
                 const assignment = lineup[slotKey];
                 const player = findPlayer(assignment?.player_id);
 
                 return (
-                  <PlayerCard
-                    key={slotKey}
-                    slotKey={slotKey}
-                    player={player}
-                    teamLogoById={teamLogoById}
-                    isCaptain={Boolean(assignment?.is_captain)}
-                    size="bench"
-                    readOnly={isReadOnly}
-                    onOpenPicker={() => setActiveSlot(slotKey)}
-                    onToggleCaptain={() => handleToggleCaptain(slotKey)}
-                    onRemove={() => handleRemovePlayer(slotKey)}
-                  />
+                  <div key={slotKey} className="snap-start">
+                    <PlayerCard
+                      slotKey={slotKey}
+                      player={player}
+                      teamLogoById={teamLogoById}
+                      isCaptain={Boolean(assignment?.is_captain)}
+                      size="bench"
+                      readOnly={isReadOnly}
+                      onOpenPicker={() => handleAvatarTap(slotKey, Boolean(player))}
+                      onToggleCaptain={() => handleToggleCaptain(slotKey)}
+                      onRemove={() => handleRemovePlayer(slotKey)}
+                    />
+                  </div>
                 );
               })}
             </div>
@@ -343,8 +374,33 @@ export function TeamBuilder({
           teamLogoById={teamLogoById}
           assignedPlayerIds={assignedPlayerIds}
           currentPlayerId={lineup[activeSlot]?.player_id}
+          availablePositions={Array.from(
+            new Set(allSlotKeys.map(getRequiredPositionForSlot))
+          )}
+          onRoleChange={handlePickerRoleChange}
           onSelect={(player) => handleAssignPlayer(activeSlot, player)}
           onClose={() => setActiveSlot(null)}
+        />
+      ) : null}
+
+      {actionSheetSlot ? (
+        <PlayerActionSheet
+          slotKey={actionSheetSlot}
+          player={findPlayer(lineup[actionSheetSlot]?.player_id)}
+          isCaptain={Boolean(lineup[actionSheetSlot]?.is_captain)}
+          onSubstitute={() => {
+            setActionSheetSlot(null);
+            setActiveSlot(actionSheetSlot);
+          }}
+          onToggleCaptain={() => {
+            handleToggleCaptain(actionSheetSlot);
+            setActionSheetSlot(null);
+          }}
+          onRemove={() => {
+            handleRemovePlayer(actionSheetSlot);
+            setActionSheetSlot(null);
+          }}
+          onClose={() => setActionSheetSlot(null)}
         />
       ) : null}
 
@@ -440,59 +496,75 @@ function FormationSummary({
       : "Squadra completa: scegli il capitano";
 
   return (
-    <aside className="border-t border-[#22E6C3]/20 bg-black/15 p-4 sm:p-5 xl:border-t-0">
-      <div className="rounded-xl border border-[#22E6C3]/25 bg-[linear-gradient(145deg,rgba(15,30,46,0.9),rgba(6,17,27,0.96))] p-4">
+    <aside className="border-t border-[#1E3448] bg-black/15 p-4 sm:border-[#22E6C3]/20 sm:p-5 xl:border-t-0">
+      <div className="rounded-xl border border-[#1E3448] bg-[linear-gradient(145deg,rgba(15,30,46,0.9),rgba(6,17,27,0.96))] p-4 sm:border-[#22E6C3]/25">
         <section>
-        <div className="flex items-center gap-2 text-[#22E6C3]">
-          <FormationIcon />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-white">
-            Stato formazione
-          </h3>
-        </div>
-        <div className="mt-4 flex items-center gap-3">
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+        <div className="sm:hidden">
+          <div className="flex items-center gap-2 text-xs">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${isComplete ? "bg-green-500" : "bg-amber-400"}`} />
+            <p className="min-w-0 flex-1 truncate font-semibold text-zinc-300">{stageLabel}</p>
+            <span className="shrink-0 font-black text-white">{completed}/{total}</span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
             <div
               className="h-full rounded-full bg-gradient-to-r from-[#18C6A7] to-[#1ED8B7] transition-[width] duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <span className="text-sm font-black text-white">{completed}/{total}</span>
         </div>
-        <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-4 text-xs">
-          <span className={`h-2 w-2 shrink-0 rounded-full ${isComplete ? "bg-[#1ED8B7]" : "bg-amber-400"}`} />
-          <p className="font-semibold text-zinc-300">{stageLabel}</p>
+
+        <div className="hidden sm:block">
+          <div className="flex items-center gap-2 text-[#22E6C3]">
+            <FormationIcon />
+            <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-white">
+              Stato formazione
+            </h3>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#18C6A7] to-[#1ED8B7] transition-[width] duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <span className="text-sm font-black text-white">{completed}/{total}</span>
+          </div>
+          <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-4 text-xs">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${isComplete ? "bg-[#1ED8B7]" : "bg-amber-400"}`} />
+            <p className="font-semibold text-zinc-300">{stageLabel}</p>
+          </div>
         </div>
         </section>
 
-        <section className="mt-5 border-t border-[#22E6C3]/25 pt-5">
-        <div className="flex items-center gap-2 text-[#22E6C3]">
-          <TrophyIcon />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-white">
-            Dettagli torneo
-          </h3>
+        <section className="mt-5 border-t border-[#1E3448] pt-5">
+        <details className="group sm:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
+            <span className="flex items-center gap-2 text-[#22E6C3]">
+              <TrophyIcon />
+              <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-white">
+                Dettagli torneo
+              </h3>
+            </span>
+            <span className="text-zinc-500 transition group-open:rotate-180">
+              <ChevronDownIcon />
+            </span>
+          </summary>
+          <dl className="mt-4 space-y-2.5 text-xs">
+            <TournamentDetailRows tournament={tournament} competition={competition} />
+          </dl>
+        </details>
+
+        <div className="hidden sm:block">
+          <div className="flex items-center gap-2 text-[#22E6C3]">
+            <TrophyIcon />
+            <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-white">
+              Dettagli torneo
+            </h3>
+          </div>
+          <dl className="mt-4 space-y-2.5 text-xs">
+            <TournamentDetailRows tournament={tournament} competition={competition} />
+          </dl>
         </div>
-        <dl className="mt-4 space-y-2.5 text-xs">
-          <SummaryRow label="Nome torneo" value={tournament.title} />
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-zinc-400">Competizione</dt>
-            <dd className="flex min-w-0 items-center gap-2 font-bold text-zinc-100">
-              {tournament.leagues[0] ? (
-                <LeagueLogo logoUrl={tournament.leagues[0].logo} label={tournament.leagues[0].name} />
-              ) : null}
-              <span className="max-w-32 truncate">{competition}</span>
-            </dd>
-          </div>
-          <SummaryRow label="Montepremi" value={formatPrizePool(tournament.prize_pool)} />
-          <SummaryRow label="Quota di iscrizione" value={formatMoney(tournament.buy_in)} />
-          <SummaryRow label="Partecipanti" value={`${tournament.enrolled_users_count}/${tournament.max_participants}`} />
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-zinc-400">Stato</dt>
-            <dd className="flex items-center gap-2 text-right font-bold text-zinc-100">
-              <span className={`h-2.5 w-2.5 rounded-full ${tournament.status === "enrollments" ? "bg-[#22E6C3]" : "bg-zinc-500"}`} />
-              {getTournamentStatusLabel(tournament.status)}
-            </dd>
-          </div>
-        </dl>
         </section>
 
         <div className="mt-5 rounded-xl border border-[#22E6C3]/25 bg-[#123A3B]/20 p-4">
@@ -549,6 +621,39 @@ function FormationSummary({
         </div>
       </div>
     </aside>
+  );
+}
+
+function TournamentDetailRows({
+  tournament,
+  competition,
+}: {
+  tournament: TournamentDetail;
+  competition: string;
+}) {
+  return (
+    <>
+      <SummaryRow label="Nome torneo" value={tournament.title} />
+      <div className="flex items-center justify-between gap-3">
+        <dt className="text-zinc-400">Competizione</dt>
+        <dd className="flex min-w-0 items-center gap-2 font-bold text-zinc-100">
+          {tournament.leagues[0] ? (
+            <LeagueLogo logoUrl={tournament.leagues[0].logo} label={tournament.leagues[0].name} />
+          ) : null}
+          <span className="max-w-32 truncate">{competition}</span>
+        </dd>
+      </div>
+      <SummaryRow label="Montepremi" value={formatPrizePool(tournament.prize_pool)} />
+      <SummaryRow label="Quota di iscrizione" value={formatMoney(tournament.buy_in)} />
+      <SummaryRow label="Partecipanti" value={`${tournament.enrolled_users_count}/${tournament.max_participants}`} />
+      <div className="flex items-center justify-between gap-3">
+        <dt className="text-zinc-400">Stato</dt>
+        <dd className="flex items-center gap-2 text-right font-bold text-zinc-100">
+          <span className={`h-2.5 w-2.5 rounded-full ${tournament.status === "enrollments" ? "bg-[#22E6C3]" : "bg-zinc-500"}`} />
+          {getTournamentStatusLabel(tournament.status)}
+        </dd>
+      </div>
+    </>
   );
 }
 
@@ -658,7 +763,7 @@ function PlayerCard({
         ) : null}
 
         {player && teamLogo ? (
-          <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-black/40 bg-[#06111B] shadow">
+          <span className="absolute -bottom-0.5 -right-0.5 hidden h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-black/40 bg-[#06111B] shadow sm:flex">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={teamLogo} alt="" className="h-full w-full object-contain p-0.5" />
           </span>
@@ -672,7 +777,7 @@ function PlayerCard({
       </div>
 
       {player && !readOnly ? (
-        <div className="flex items-center gap-1">
+        <div className="hidden items-center gap-1 sm:flex">
           <button
             type="button"
             onClick={onToggleCaptain}
@@ -706,7 +811,14 @@ function PlayerCard({
               : "text-white/70"
         }`}
       >
-        {player?.display_name ?? getSlotLabel(slotKey)}
+        {player ? (
+          <>
+            <span className="sm:hidden">{getSurname(player.display_name)}</span>
+            <span className="hidden sm:inline">{player.display_name}</span>
+          </>
+        ) : (
+          getSlotLabel(slotKey)
+        )}
       </span>
     </div>
   );
@@ -773,6 +885,8 @@ function PlayerPickerModal({
   teamLogoById,
   assignedPlayerIds,
   currentPlayerId,
+  availablePositions,
+  onRoleChange,
   onSelect,
   onClose,
 }: {
@@ -781,15 +895,37 @@ function PlayerPickerModal({
   teamLogoById: Map<number, string>;
   assignedPlayerIds: Set<number>;
   currentPlayerId?: number;
+  availablePositions: PlayerPosition[];
+  onRoleChange: (position: PlayerPosition) => void;
   onSelect: (player: TournamentPlayer) => void;
   onClose: () => void;
 }) {
   const [search, setSearch] = useState("");
+  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const requiredPosition = getRequiredPositionForSlot(slotKey);
   const normalizedSearch = search.trim().toLowerCase();
 
+  const teamsForRole = useMemo(() => {
+    const teams = new Map<number, { id: number; name: string }>();
+    players.forEach((player) => {
+      if (player.position !== requiredPosition) return;
+      player.teams.forEach((team) => {
+        if (!teams.has(team.id)) {
+          teams.set(team.id, { id: team.id, name: team.name });
+        }
+      });
+    });
+    return Array.from(teams.values()).sort((a, b) => a.name.localeCompare(b.name, "it"));
+  }, [players, requiredPosition]);
+
   const candidates = players.filter((player) => {
     if (player.position !== requiredPosition) return false;
+    if (
+      selectedTeamId !== null &&
+      !player.teams.some((team) => team.id === selectedTeamId)
+    ) {
+      return false;
+    }
     if (assignedPlayerIds.has(player.id) && player.id !== currentPlayerId) {
       return false;
     }
@@ -838,6 +974,47 @@ function PlayerPickerModal({
           className="mt-4 h-11 w-full rounded-full border border-white/10 bg-[#101D2C] px-4 text-sm text-zinc-100 outline-none focus:border-[#22E6C3]/50"
         />
 
+        <div className="mt-3 sm:hidden">
+          <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-zinc-500">
+            Filtra per ruolo
+          </p>
+          <div className="scrollbar-hide flex gap-1.5 overflow-x-auto pb-1">
+            {PLAYER_ROLE_FILTERS.filter((role) =>
+              availablePositions.includes(role.value)
+            ).map((role) => (
+              <RoleFilterChip
+                key={role.value}
+                label={role.label}
+                position={role.value}
+                isActive={requiredPosition === role.value}
+                onClick={() => {
+                  setSelectedTeamId(null);
+                  onRoleChange(role.value);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {teamsForRole.length > 1 ? (
+          <div className="scrollbar-hide mt-3 flex gap-1.5 overflow-x-auto pb-1 sm:hidden">
+            <TeamFilterChip
+              label="Tutte"
+              isActive={selectedTeamId === null}
+              onClick={() => setSelectedTeamId(null)}
+            />
+            {teamsForRole.map((team) => (
+              <TeamFilterChip
+                key={team.id}
+                label={team.name}
+                logoUrl={teamLogoById.get(team.id)}
+                isActive={selectedTeamId === team.id}
+                onClick={() => setSelectedTeamId(team.id)}
+              />
+            ))}
+          </div>
+        ) : null}
+
         <div
           onClick={(event) => {
             if (event.target === event.currentTarget) onClose();
@@ -846,8 +1023,11 @@ function PlayerPickerModal({
         >
           {candidates.length ? (
             candidates.map((player) => {
-              const teamLogo = player.teams[0]
-                ? teamLogoById.get(player.teams[0].id)
+              const displayedTeam =
+                player.teams.find((team) => team.id === selectedTeamId) ??
+                player.teams[0];
+              const teamLogo = displayedTeam
+                ? teamLogoById.get(displayedTeam.id)
                 : null;
 
               return (
@@ -861,32 +1041,39 @@ function PlayerPickerModal({
                       : "hover:bg-white/5"
                   }`}
                 >
-                  <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10">
-                    {player.image_path ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={player.image_path}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center text-[10px] font-bold text-zinc-300">
-                        {getInitials(player.display_name)}
-                      </span>
-                    )}
+                  <span className="relative h-10 w-10 shrink-0">
+                    <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white/10">
+                      {player.image_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={player.image_path}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-[10px] font-bold text-zinc-300">
+                          {getInitials(player.display_name)}
+                        </span>
+                      )}
+                    </span>
                     {teamLogo ? (
-                      <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center overflow-hidden rounded-full border border-black/40 bg-[#06111B]">
+                      <span className="absolute -bottom-1 -right-1 z-10 flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border-2 border-[#0F1E2E] bg-white shadow-md">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={teamLogo} alt="" className="h-full w-full object-contain p-0.5" />
                       </span>
                     ) : null}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-zinc-100">
-                      {player.display_name}
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="min-w-0 truncate text-sm font-semibold text-zinc-100">
+                        {player.display_name}
+                      </span>
+                      <span className="sm:hidden">
+                        <PlayerRoleBadge position={player.position} />
+                      </span>
                     </span>
                     <span className="block truncate text-xs text-zinc-500">
-                      {player.teams[0]?.name ?? "Squadra sconosciuta"}
+                      {displayedTeam?.name ?? "Squadra sconosciuta"}
                     </span>
                   </span>
                 </button>
@@ -903,6 +1090,190 @@ function PlayerPickerModal({
   );
 }
 
+function PlayerActionSheet({
+  slotKey,
+  player,
+  isCaptain,
+  onSubstitute,
+  onToggleCaptain,
+  onRemove,
+  onClose,
+}: {
+  slotKey: string;
+  player: TournamentPlayer | null;
+  isCaptain: boolean;
+  onSubstitute: () => void;
+  onToggleCaptain: () => void;
+  onRemove: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[85] flex items-end sm:hidden">
+      <button
+        type="button"
+        aria-label="Chiudi"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+      />
+
+      <div className="relative w-full rounded-t-2xl border-t border-white/10 bg-[#0F1E2E] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl">
+        <div className="mb-4 flex items-center gap-3">
+          <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/10">
+            {player?.image_path ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={player.image_path} alt="" className="h-full w-full object-cover" />
+            ) : player ? (
+              <span className="flex h-full w-full items-center justify-center text-xs font-bold text-zinc-300">
+                {getInitials(player.display_name)}
+              </span>
+            ) : null}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-black text-white">
+              {player?.display_name ?? getSlotLabel(slotKey)}
+            </p>
+            <p className="text-xs text-zinc-500">{getSlotLabel(slotKey)}</p>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <button
+            type="button"
+            onClick={onSubstitute}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-zinc-100 transition hover:bg-white/5"
+          >
+            <span className="text-[#22E6C3]"><SwapIcon /></span>
+            Sostituisci
+          </button>
+          <button
+            type="button"
+            onClick={onToggleCaptain}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-zinc-100 transition hover:bg-white/5"
+          >
+            <span className="text-amber-400"><StarIcon /></span>
+            {isCaptain ? "Togli capitano" : "Rendi capitano"}
+          </button>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-red-300 transition hover:bg-red-500/10"
+          >
+            <CloseIcon />
+            Rimuovi dalla formazione
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SwapIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M7 4v13M7 17l-3-3M7 17l3-3M17 20V7M17 7l3 3M17 7l-3 3" />
+    </svg>
+  );
+}
+
+function TeamFilterChip({
+  label,
+  logoUrl,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  logoUrl?: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={isActive}
+      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+        isActive
+          ? "border-[#22E6C3] bg-[#123A3B] text-[#22E6C3]"
+          : "border-[#1E3448] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
+      }`}
+    >
+      {logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logoUrl} alt="" className="h-4 w-4 shrink-0 object-contain" />
+      ) : null}
+      {label}
+    </button>
+  );
+}
+
+const PLAYER_ROLE_FILTERS: Array<{
+  value: PlayerPosition;
+  label: string;
+  badgeLabel: string;
+}> = [
+  { value: "GOALKEEPER", label: "Portieri", badgeLabel: "Portiere" },
+  { value: "DEFENDER", label: "Difensori", badgeLabel: "Difensore" },
+  { value: "MIDFIELDER", label: "Centrocampisti", badgeLabel: "Centrocampista" },
+  { value: "ATTACKER", label: "Attaccanti", badgeLabel: "Attaccante" },
+];
+
+const PLAYER_ROLE_STYLES: Record<PlayerPosition, string> = {
+  GOALKEEPER: "border-[#F6C343]/35 bg-[#F6C343]/10 text-[#F6C343]",
+  DEFENDER: "border-[#3B82F6]/35 bg-[#3B82F6]/10 text-[#60A5FA]",
+  MIDFIELDER: "border-[#22C55E]/35 bg-[#22C55E]/10 text-[#4ADE80]",
+  ATTACKER: "border-[#EF4444]/35 bg-[#EF4444]/10 text-[#F87171]",
+  COACH: "border-white/15 bg-white/5 text-zinc-400",
+};
+
+function RoleFilterChip({
+  label,
+  position,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  position: PlayerPosition;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={isActive}
+      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+        isActive
+          ? PLAYER_ROLE_STYLES[position]
+          : "border-[#1E3448] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function PlayerRoleBadge({ position }: { position: string }) {
+  const role = PLAYER_ROLE_FILTERS.find((item) => item.value === position);
+  const style = PLAYER_ROLE_STYLES[role?.value ?? "COACH"];
+
+  return (
+    <span
+      className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${style}`}
+    >
+      {role?.badgeLabel ?? "Ruolo"}
+    </span>
+  );
+}
+
 function PitchBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(34,230,195,0.18),transparent_68%)]">
@@ -915,6 +1286,12 @@ function PitchBackground() {
       />
     </div>
   );
+}
+
+/** Su mobile l'etichetta mostra solo il cognome: piu' leggibile nello spazio stretto tra un ruolo e l'altro. */
+function getSurname(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts[parts.length - 1] ?? name;
 }
 
 function getInitials(name: string) {
@@ -1065,6 +1442,23 @@ function CloseIcon() {
       strokeLinecap="round"
     >
       <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 9 6 6 6-6" />
     </svg>
   );
 }
