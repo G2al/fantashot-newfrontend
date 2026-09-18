@@ -323,7 +323,7 @@ export function TeamBuilder({
               </p>
               <p className="text-[10px] text-zinc-500">{BENCH_SLOT_KEYS.length} slot per le riserve</p>
             </div>
-            <div className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 sm:justify-between sm:snap-none">
+            <div className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 pb-1 pt-3 sm:justify-between sm:snap-none">
               {BENCH_SLOT_KEYS.map((slotKey) => {
                 const assignment = lineup[slotKey];
                 const player = findPlayer(assignment?.player_id);
@@ -720,7 +720,7 @@ function PlayerCard({
             player
               ? isCaptain
                 ? "border-2 border-amber-400 bg-[#0F1E2E] text-white"
-                : "border-2 border-white/80 bg-[#0F1E2E] text-white"
+                : "border-2 border-[#22E6C3] bg-[#0F1E2E] text-white"
               : "border-0 bg-transparent text-white hover:scale-105"
           } ${readOnly ? "cursor-default disabled:opacity-100 hover:scale-100" : ""}`}
         >
@@ -946,7 +946,7 @@ function PlayerPickerModal({
         onClick={(event) => {
           if (event.target === event.currentTarget) onClose();
         }}
-        className="relative flex max-h-[80vh] w-full max-w-md flex-col rounded-t-2xl border-t border-white/10 bg-[#0F1E2E] p-5 shadow-2xl sm:rounded-2xl sm:border"
+        className="relative flex max-h-[88dvh] w-full max-w-md flex-col rounded-t-2xl border-t border-white/10 bg-[#0F1E2E] p-5 shadow-2xl sm:max-w-2xl sm:rounded-2xl sm:border sm:p-6 lg:max-w-3xl"
       >
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -971,14 +971,14 @@ function PlayerPickerModal({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Cerca giocatore..."
-          className="mt-4 h-11 w-full rounded-full border border-white/10 bg-[#101D2C] px-4 text-sm text-zinc-100 outline-none focus:border-[#22E6C3]/50"
+          className="mt-4 h-9 w-full rounded-full border border-[#1E3448] bg-[#101D2C] px-3.5 text-xs text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-[#22E6C3]/50"
         />
 
-        <div className="mt-3 sm:hidden">
+        <div className="mt-4">
           <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-zinc-500">
             Filtra per ruolo
           </p>
-          <div className="scrollbar-hide flex gap-1.5 overflow-x-auto pb-1">
+          <div className="grid grid-cols-4 gap-2">
             {PLAYER_ROLE_FILTERS.filter((role) =>
               availablePositions.includes(role.value)
             ).map((role) => (
@@ -997,21 +997,26 @@ function PlayerPickerModal({
         </div>
 
         {teamsForRole.length > 1 ? (
-          <div className="scrollbar-hide mt-3 flex gap-1.5 overflow-x-auto pb-1 sm:hidden">
-            <TeamFilterChip
-              label="Tutte"
-              isActive={selectedTeamId === null}
-              onClick={() => setSelectedTeamId(null)}
-            />
-            {teamsForRole.map((team) => (
+          <div className="mt-3">
+            <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-zinc-500">
+              Filtra per squadra
+            </p>
+            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
               <TeamFilterChip
-                key={team.id}
-                label={team.name}
-                logoUrl={teamLogoById.get(team.id)}
-                isActive={selectedTeamId === team.id}
-                onClick={() => setSelectedTeamId(team.id)}
+                label="Tutte"
+                isActive={selectedTeamId === null}
+                onClick={() => setSelectedTeamId(null)}
               />
-            ))}
+              {teamsForRole.map((team) => (
+                <TeamFilterChip
+                  key={team.id}
+                  label={team.name}
+                  logoUrl={teamLogoById.get(team.id)}
+                  isActive={selectedTeamId === team.id}
+                  onClick={() => setSelectedTeamId(team.id)}
+                />
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -1019,7 +1024,7 @@ function PlayerPickerModal({
           onClick={(event) => {
             if (event.target === event.currentTarget) onClose();
           }}
-          className="mt-4 min-h-0 flex-1 space-y-1 overflow-y-auto"
+          className="mt-4 grid min-h-0 flex-1 grid-cols-1 content-start gap-1 overflow-y-auto sm:grid-cols-2 sm:gap-2"
         >
           {candidates.length ? (
             candidates.map((player) => {
@@ -1068,9 +1073,7 @@ function PlayerPickerModal({
                       <span className="min-w-0 truncate text-sm font-semibold text-zinc-100">
                         {player.display_name}
                       </span>
-                      <span className="sm:hidden">
-                        <PlayerRoleBadge position={player.position} />
-                      </span>
+                      <PlayerRoleBadge position={player.position} />
                     </span>
                     <span className="block truncate text-xs text-zinc-500">
                       {displayedTeam?.name ?? "Squadra sconosciuta"}
@@ -1080,7 +1083,7 @@ function PlayerPickerModal({
               );
             })
           ) : (
-            <p className="px-3 py-6 text-center text-sm text-zinc-500">
+            <p className="px-3 py-6 text-center text-sm text-zinc-500 sm:col-span-2">
               Nessun giocatore trovato per questo ruolo.
             </p>
           )}
@@ -1200,7 +1203,7 @@ function TeamFilterChip({
       type="button"
       onClick={onClick}
       aria-pressed={isActive}
-      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+      className={`flex min-h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-bold transition ${
         isActive
           ? "border-[#22E6C3] bg-[#123A3B] text-[#22E6C3]"
           : "border-[#1E3448] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
@@ -1218,12 +1221,12 @@ function TeamFilterChip({
 const PLAYER_ROLE_FILTERS: Array<{
   value: PlayerPosition;
   label: string;
-  badgeLabel: string;
+  asset: string;
 }> = [
-  { value: "GOALKEEPER", label: "Portieri", badgeLabel: "Portiere" },
-  { value: "DEFENDER", label: "Difensori", badgeLabel: "Difensore" },
-  { value: "MIDFIELDER", label: "Centrocampisti", badgeLabel: "Centrocampista" },
-  { value: "ATTACKER", label: "Attaccanti", badgeLabel: "Attaccante" },
+  { value: "GOALKEEPER", label: "Portieri", asset: "/images/roles/goalkeeper.svg" },
+  { value: "DEFENDER", label: "Difensori", asset: "/images/roles/defender.svg" },
+  { value: "MIDFIELDER", label: "Centrocampisti", asset: "/images/roles/midfielder.svg" },
+  { value: "ATTACKER", label: "Attaccanti", asset: "/images/roles/attacker.svg" },
 ];
 
 const PLAYER_ROLE_STYLES: Record<PlayerPosition, string> = {
@@ -1250,26 +1253,44 @@ function RoleFilterChip({
       type="button"
       onClick={onClick}
       aria-pressed={isActive}
-      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+      aria-label={label}
+      title={label}
+      className={`grid min-h-14 w-full place-items-center rounded-xl border transition ${
         isActive
           ? PLAYER_ROLE_STYLES[position]
           : "border-[#1E3448] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
       }`}
     >
-      {label}
+      <Image
+        src={PLAYER_ROLE_FILTERS.find((role) => role.value === position)?.asset ?? "/images/roles/attacker.svg"}
+        alt=""
+        width={128}
+        height={128}
+        aria-hidden="true"
+        className={`h-9 w-9 object-contain transition ${isActive ? "scale-105" : "opacity-65 grayscale-[35%]"}`}
+      />
+      <span className="sr-only">{label}</span>
     </button>
   );
 }
 
 function PlayerRoleBadge({ position }: { position: string }) {
   const role = PLAYER_ROLE_FILTERS.find((item) => item.value === position);
-  const style = PLAYER_ROLE_STYLES[role?.value ?? "COACH"];
 
   return (
     <span
-      className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${style}`}
+      title={role?.label ?? "Ruolo"}
+      className="inline-flex h-7 w-7 shrink-0 items-center justify-center"
     >
-      {role?.badgeLabel ?? "Ruolo"}
+      <Image
+        src={role?.asset ?? "/images/roles/attacker.svg"}
+        alt=""
+        width={128}
+        height={128}
+        aria-hidden="true"
+        className="h-7 w-7 object-contain"
+      />
+      <span className="sr-only">{role?.label ?? "Ruolo"}</span>
     </span>
   );
 }
