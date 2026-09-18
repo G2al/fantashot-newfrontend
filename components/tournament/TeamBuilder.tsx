@@ -204,7 +204,7 @@ export function TeamBuilder({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-[#22E6C3]/30 bg-[linear-gradient(145deg,#0F1E2E_0%,#120605_58%,#1a0807_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
+    <div className="relative overflow-hidden rounded-xl border border-[#22E6C3]/30 bg-[linear-gradient(145deg,#0F1E2E_0%,#0A1420_58%,#06111B_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:px-6">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#22E6C3]/12 text-[#22E6C3]">
@@ -441,7 +441,7 @@ function FormationSummary({
 
   return (
     <aside className="border-t border-[#22E6C3]/20 bg-black/15 p-4 sm:p-5 xl:border-t-0">
-      <div className="rounded-xl border border-[#22E6C3]/25 bg-[linear-gradient(145deg,rgba(35,10,8,0.9),rgba(18,6,5,0.96))] p-4">
+      <div className="rounded-xl border border-[#22E6C3]/25 bg-[linear-gradient(145deg,rgba(15,30,46,0.9),rgba(6,17,27,0.96))] p-4">
         <section>
         <div className="flex items-center gap-2 text-[#22E6C3]">
           <FormationIcon />
@@ -905,8 +905,8 @@ function PlayerPickerModal({
 
 function PitchBackground() {
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(72,19,14,0.34),transparent_68%)]">
-      <div className="absolute inset-x-[8%] bottom-[7%] top-[13%] bg-[radial-gradient(ellipse_at_center,rgba(16,185,44,0.2),transparent_65%)] blur-2xl" />
+    <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(34,230,195,0.18),transparent_68%)]">
+      <div className="absolute inset-x-[8%] bottom-[7%] top-[13%] bg-[radial-gradient(ellipse_at_center,rgba(34,230,195,0.2),transparent_65%)] blur-2xl" />
       {/* eslint-disable-next-line @next/next/no-img-element -- asset sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
       <img
         src="/images/tournament-pitch.png"

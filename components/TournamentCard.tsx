@@ -31,7 +31,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
 
   return (
     <article className="group flex min-h-[132px] overflow-hidden rounded-lg border border-white/10 bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 hover:-translate-y-0.5 hover:border-[#22E6C3]/30 hover:shadow-[0_18px_52px_rgba(34,230,195,0.12)] lg:min-h-0 lg:flex-col">
-      <div className="relative flex w-[96px] shrink-0 items-center justify-center overflow-hidden border-r border-white/8 bg-[radial-gradient(circle_at_50%_40%,rgba(34,230,195,0.2),rgba(17,7,7,0.92)_72%)] lg:h-[132px] lg:w-full lg:border-b lg:border-r-0">
+      <div className="relative flex w-[96px] shrink-0 items-center justify-center overflow-hidden border-r border-white/8 bg-[radial-gradient(circle_at_50%_40%,rgba(34,230,195,0.2),rgba(6,17,27,0.92)_72%)] lg:h-[132px] lg:w-full lg:border-b lg:border-r-0">
         {coverUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element -- host della copertina variabile per ambiente, evitiamo il whitelisting di next/image */}
