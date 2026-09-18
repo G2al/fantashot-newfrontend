@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ApiError } from "@/lib/api";
@@ -289,7 +289,7 @@ export function TeamBuilder({
 
       <div className={isReadOnly ? "" : "grid xl:grid-cols-[minmax(0,1fr)_310px]"}>
         <div className="min-w-0 xl:border-r xl:border-[#22E6C3]/20">
-          <div className="relative mx-auto aspect-[4/3] w-full max-w-[1120px] xl:-mt-12">
+          <div className="relative mx-auto aspect-[3/4] w-full max-w-[1120px] sm:aspect-[4/3] xl:-mt-12">
             <PitchBackground />
 
             {starterSlotKeys.map((slotKey) => {
@@ -709,7 +709,7 @@ function PlayerCard({
   const roleAsset = getRoleAsset(slotKey);
 
   return (
-    <div className={`flex flex-col items-center gap-1 ${size === "bench" ? "w-[72px] shrink-0" : "w-16 sm:w-20"}`}>
+    <div className={`flex flex-col items-center gap-1 ${size === "bench" ? "w-[72px] shrink-0" : "w-14 sm:w-20"}`}>
       <div className="relative">
         <button
           type="button"
@@ -758,7 +758,7 @@ function PlayerCard({
             alt={getSlotLabel(slotKey)}
             width={32}
             height={32}
-            className="absolute -left-2 -top-2 z-20 h-7 w-7 drop-shadow-lg"
+            className="absolute -left-1.5 -top-1.5 z-20 h-5 w-5 drop-shadow-lg sm:-left-2 sm:-top-2 sm:h-7 sm:w-7"
           />
         ) : null}
 
@@ -770,7 +770,7 @@ function PlayerCard({
         ) : null}
 
         {player && isCaptain ? (
-          <span className="absolute -right-1.5 -top-1.5 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-[9px] font-black text-black shadow">
+          <span className="absolute -right-1 -top-1 z-20 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[8px] font-black text-black shadow sm:-right-1.5 sm:-top-1.5 sm:h-5 sm:w-5 sm:text-[9px]">
             C
           </span>
         ) : null}
@@ -803,7 +803,7 @@ function PlayerCard({
       ) : null}
 
       <span
-        className={`max-w-[88px] truncate rounded-full px-2 py-0.5 text-center text-[9px] font-bold leading-tight sm:text-[10px] ${
+        className={`max-w-14 truncate rounded-full px-1.5 py-0.5 text-center text-[8px] font-bold leading-tight sm:max-w-[88px] sm:px-2 sm:text-[10px] ${
           player
             ? "bg-black/80 text-white drop-shadow"
             : size === "pitch"
@@ -859,10 +859,17 @@ function PitchSlot({
   onToggleCaptain: () => void;
   onRemove: () => void;
 }) {
+  const slotPosition = {
+    "--mobile-slot-left": `${12 + x * 0.76}%`,
+    "--mobile-slot-top": `${10 + y * 0.8}%`,
+    "--desktop-slot-left": `${12 + x * 0.76}%`,
+    "--desktop-slot-top": `${16 + y * 0.68}%`,
+  } as CSSProperties;
+
   return (
     <div
-      style={{ left: `${12 + x * 0.76}%`, top: `${16 + y * 0.68}%` }}
-      className="absolute -translate-x-1/2 -translate-y-1/2"
+      style={slotPosition}
+      className="absolute left-[var(--mobile-slot-left)] top-[var(--mobile-slot-top)] -translate-x-1/2 -translate-y-1/2 sm:left-[var(--desktop-slot-left)] sm:top-[var(--desktop-slot-top)]"
     >
       <PlayerCard
         slotKey={slotKey}
@@ -1303,7 +1310,7 @@ function PitchBackground() {
       <img
         src="/images/tournament-pitch.png"
         alt="Campo da calcio Fantashot"
-        className="absolute inset-0 h-full w-full object-contain"
+        className="absolute inset-0 h-full w-full object-fill sm:object-contain"
       />
     </div>
   );
