@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState, type CSSProperties } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useCountdown } from "@/hooks/use-countdown";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ApiError } from "@/lib/api";
 import { subscribeToTournament, updateTournamentTeam } from "@/lib/api/tournaments";
@@ -48,6 +49,11 @@ export function TeamBuilder({
   const { token } = useAuth();
   const isReadOnly = mode === "view";
   const isMobile = !useMediaQuery("(min-width: 640px)");
+  const enrollmentCountdown = useCountdown(
+    tournament.status === "enrollments"
+      ? tournament.enrollments_end_date
+      : null
+  );
   const selectablePlayers = useMemo(
     () => tournament.players.filter(isSelectablePlayer),
     [tournament.players]
@@ -121,6 +127,7 @@ export function TeamBuilder({
 
   function handleModuleChange(nextModuleId: number) {
     setModuleId(nextModuleId);
+    setError(null);
     setLineup((current) => {
       const next: LineupPayload["lineup"] = {};
       BENCH_SLOT_KEYS.forEach((key) => {
@@ -161,6 +168,7 @@ export function TeamBuilder({
 
   function handleRandomize() {
     setLineup(buildRandomLineup(selectedModule, selectablePlayers));
+    setError(null);
   }
 
   function handleClear() {
@@ -234,8 +242,8 @@ export function TeamBuilder({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-[#1E3448] bg-[linear-gradient(145deg,#0F1E2E_0%,#0A1420_58%,#06111B_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)] sm:border-[#22E6C3]/30">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:px-6">
+    <div className={`relative overflow-hidden rounded-xl border border-[#1E3448] bg-[linear-gradient(145deg,#0F1E2E_0%,#0A1420_58%,#06111B_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)] sm:border-[#22E6C3]/30 ${isReadOnly ? "" : "pb-24 sm:pb-0"}`}>
+      <div className="hidden flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:flex sm:px-6">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#22E6C3]/12 text-[#22E6C3]">
             <FormationIcon />
@@ -287,10 +295,50 @@ export function TeamBuilder({
         </div>
       </div>
 
+      <div className="flex h-11 items-center justify-between gap-3 border-b border-[#1E3448] bg-[#0A1420] px-3 sm:hidden">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className={`h-2 w-2 shrink-0 rounded-full ${enrollmentCountdown ? "bg-[#22E6C3] animate-pulse" : "bg-zinc-500"}`} />
+          <span className="text-[10px] font-black uppercase tracking-wide text-zinc-400">
+            {enrollmentCountdown ? "Chiude tra" : getTournamentStatusLabel(tournament.status)}
+          </span>
+          {enrollmentCountdown ? (
+            <span className="font-mono text-xs font-black tabular-nums text-white">
+              {enrollmentCountdown}
+            </span>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          aria-label="Chiudi formazione"
+          title="Chiudi"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/15 text-zinc-300 disabled:opacity-50"
+        >
+          <CloseIcon />
+        </button>
+      </div>
+
       <div className={isReadOnly ? "" : "grid xl:grid-cols-[minmax(0,1fr)_310px]"}>
         <div className="min-w-0 xl:border-r xl:border-[#22E6C3]/20">
           <div className="relative mx-auto aspect-[3/4] w-full max-w-[1120px] sm:aspect-[4/3] xl:-mt-12">
             <PitchBackground />
+
+            <div className="absolute left-1/2 top-2 z-30 w-28 -translate-x-1/2 sm:hidden">
+              {isReadOnly ? (
+                <span className="flex h-9 items-center justify-center rounded-lg border border-[#1E3448] bg-[#0F1E2E] px-3 text-xs font-black text-white shadow-lg">
+                  {selectedModule.name}
+                </span>
+              ) : (
+                <ModuleSelect
+                  modules={tournament.modules}
+                  value={moduleId}
+                  onChange={handleModuleChange}
+                  disabled={isSubmitting}
+                  compact
+                />
+              )}
+            </div>
 
             {starterSlotKeys.map((slotKey) => {
               const position = selectedModule.schema[slotKey];
@@ -367,6 +415,52 @@ export function TeamBuilder({
         )}
       </div>
 
+      {!isReadOnly ? (
+        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-[#1E3448] bg-[#06111B]/95 px-3 pt-2 shadow-[0_-14px_40px_rgba(0,0,0,0.5)] backdrop-blur-md sm:hidden">
+          {error ? (
+            <p className="mx-auto mb-2 max-w-md truncate rounded-md border border-red-500/20 bg-red-950/90 px-3 py-1.5 text-center text-[10px] font-semibold text-red-200">
+              {error}
+            </p>
+          ) : null}
+          <div className="mx-auto grid max-w-md grid-cols-[44px_minmax(84px,0.8fr)_minmax(0,1.4fr)] gap-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              onClick={handleRandomize}
+              disabled={isSubmitting}
+              aria-label="Formazione casuale"
+              title="Formazione casuale"
+              className="grid h-12 place-items-center rounded-lg border border-[#1E3448] bg-[#0F1E2E] text-zinc-200 disabled:opacity-50"
+            >
+              <DiceIcon />
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={isSubmitting || !hasAnyPlayer}
+              className="flex h-12 items-center justify-center gap-1.5 rounded-lg border border-[#1E3448] bg-[#0F1E2E] px-3 text-xs font-black uppercase text-zinc-200 disabled:opacity-40"
+            >
+              <TrashIcon />
+              Svuota
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSubmit()}
+              disabled={isSubmitting}
+              className="flex h-12 min-w-0 items-center justify-center gap-1.5 rounded-lg bg-[#22E6C3] px-3 text-xs font-black uppercase text-[#06111B] shadow-[0_8px_24px_rgba(34,230,195,0.28)] disabled:opacity-60"
+            >
+              <SaveIcon />
+              <span className="truncate">
+                {isSubmitting
+                  ? "Salvataggio..."
+                  : mode === "create"
+                    ? "Iscriviti e salva"
+                    : "Salva"}
+              </span>
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {activeSlot ? (
         <PlayerPickerModal
           slotKey={activeSlot}
@@ -424,11 +518,13 @@ function ModuleSelect({
   value,
   onChange,
   disabled,
+  compact = false,
 }: {
   modules: TournamentModule[];
   value: number;
   onChange: (moduleId: number) => void;
   disabled: boolean;
+  compact?: boolean;
 }) {
   const options = modules.map((module) => {
     return {
@@ -441,9 +537,9 @@ function ModuleSelect({
   return (
     <CustomDropdown
       ariaLabel="Modulo"
-      buttonClassName="h-11 min-w-36 px-4"
+      buttonClassName={compact ? "h-9 min-w-28 px-3 shadow-lg" : "h-11 min-w-36 px-4"}
       buttonContent={
-        <span className="block min-w-0 truncate text-left text-sm font-bold text-zinc-100">
+        <span className={`block min-w-0 flex-1 truncate font-bold text-zinc-100 ${compact ? "text-center text-xs" : "text-left text-sm"}`}>
           {selected?.label}
         </span>
       }
@@ -567,7 +663,7 @@ function FormationSummary({
         </div>
         </section>
 
-        <div className="mt-5 rounded-xl border border-[#22E6C3]/25 bg-[#123A3B]/20 p-4">
+        <div className="mt-5 hidden rounded-xl border border-[#22E6C3]/25 bg-[#123A3B]/20 p-4 sm:block">
           {error ? (
             <p className="mb-3 rounded-lg border border-red-500/20 bg-red-950/60 px-3 py-2 text-xs text-red-200">
               {error}
@@ -803,7 +899,7 @@ function PlayerCard({
       ) : null}
 
       <span
-        className={`max-w-14 truncate rounded-full px-1.5 py-0.5 text-center text-[8px] font-bold leading-tight sm:max-w-[88px] sm:px-2 sm:text-[10px] ${
+        className={`max-w-14 truncate rounded-full px-1.5 py-0.5 text-center text-[8px] font-bold leading-tight sm:max-w-[88px] sm:px-2 sm:text-[10px] ${!player && size === "pitch" ? "hidden sm:inline-block" : ""} ${
           player
             ? "bg-black/80 text-white drop-shadow"
             : size === "pitch"
