@@ -158,17 +158,20 @@ function MobileLeagueSummary({ leagues }: { leagues: Tournament["leagues"] }) {
           : `${leagues.length} campionati nel torneo`
       }
     >
-      <div className="flex shrink-0 items-center pl-1" aria-hidden="true">
-        {visibleLeagues.map((league, index) => (
+     <div
+        className="flex shrink-0 items-center gap-1.5 pl-1"
+        aria-hidden="true"
+      >
+        {visibleLeagues.map((league) => (
           <div
             key={league.id}
-            className={`grid h-8 w-8 place-items-center rounded-full border-2 border-[#0F1E2E] bg-[#101D2C] shadow-md ${index ? "-ml-2" : ""}`}
+            className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#0F1E2E] bg-[#101D2C] shadow-md"
           >
             <LeagueLogo logoUrl={league.logo} label={league.name} />
           </div>
         ))}
         {hiddenLeagueCount > 0 ? (
-          <span className="-ml-2 grid h-8 min-w-8 place-items-center rounded-full border-2 border-[#0F1E2E] bg-[#123A3B] px-1 text-[10px] font-black text-[#3AF5D4] shadow-md">
+         <span className="grid h-8 min-w-8 place-items-center rounded-full border-2 border-[#0F1E2E] bg-[#123A3B] px-1 text-[10px] font-black text-[#3AF5D4] shadow-md">
             +{hiddenLeagueCount}
           </span>
         ) : null}
@@ -230,3 +233,5 @@ function getStatusBadgeClassName(status: TournamentStatus) {
   }
   return "bg-zinc-700 text-zinc-100";
 }
+
+
