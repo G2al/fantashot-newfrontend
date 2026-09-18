@@ -34,6 +34,7 @@ export function TeamBuilder({
   mode,
   viewTeam,
   onSaved,
+  onPlayerInspect,
   onCancel,
 }: {
   tournament: TournamentDetail;
@@ -44,6 +45,7 @@ export function TeamBuilder({
     formation_data: Record<string, FantaTeamFormationEntry>;
   };
   onSaved?: () => void | Promise<void>;
+  onPlayerInspect?: (entry: FantaTeamFormationEntry) => void;
   onCancel: () => void;
 }) {
   const { token } = useAuth();
@@ -197,6 +199,12 @@ export function TeamBuilder({
    * schermi stretti). Su desktop, o su uno slot vuoto, si apre subito il picker.
    */
   function handleAvatarTap(slotKey: string, hasPlayer: boolean) {
+    if (isReadOnly) {
+      const formationEntry = existingTeam?.formation_data[slotKey];
+      if (hasPlayer && formationEntry) onPlayerInspect?.(formationEntry);
+      return;
+    }
+
     if (isMobile && hasPlayer && !isReadOnly) {
       setActionSheetSlot(slotKey);
     } else {
@@ -360,6 +368,7 @@ export function TeamBuilder({
               const position = selectedModule.schema[slotKey];
               const assignment = lineup[slotKey];
               const player = findPlayer(assignment?.player_id);
+              const formationEntry = existingTeam?.formation_data[slotKey];
 
               return (
                 <PitchSlot
@@ -370,7 +379,9 @@ export function TeamBuilder({
                   player={player}
                   teamLogoById={teamLogoById}
                   isCaptain={Boolean(assignment?.is_captain)}
+                  points={formationEntry?.points}
                   readOnly={isReadOnly}
+                  isInspectable={Boolean(isReadOnly && player && onPlayerInspect)}
                   onOpenPicker={() => handleAvatarTap(slotKey, Boolean(player))}
                   onToggleCaptain={() => handleToggleCaptain(slotKey)}
                   onRemove={() => handleRemovePlayer(slotKey)}
@@ -391,6 +402,7 @@ export function TeamBuilder({
               {BENCH_SLOT_KEYS.map((slotKey) => {
                 const assignment = lineup[slotKey];
                 const player = findPlayer(assignment?.player_id);
+                const formationEntry = existingTeam?.formation_data[slotKey];
 
                 return (
                   <div key={slotKey} className="snap-start">
@@ -399,8 +411,10 @@ export function TeamBuilder({
                       player={player}
                       teamLogoById={teamLogoById}
                       isCaptain={Boolean(assignment?.is_captain)}
+                      points={formationEntry?.points}
                       size="bench"
                       readOnly={isReadOnly}
+                      isInspectable={Boolean(isReadOnly && player && onPlayerInspect)}
                       onOpenPicker={() => handleAvatarTap(slotKey, Boolean(player))}
                       onToggleCaptain={() => handleToggleCaptain(slotKey)}
                       onRemove={() => handleRemovePlayer(slotKey)}
@@ -820,8 +834,10 @@ function PlayerCard({
   player,
   teamLogoById,
   isCaptain,
+  points,
   size,
   readOnly = false,
+  isInspectable = false,
   onOpenPicker,
   onToggleCaptain,
   onRemove,
@@ -830,8 +846,10 @@ function PlayerCard({
   player: TournamentPlayer | null;
   teamLogoById: Map<number, string>;
   isCaptain: boolean;
+  points?: number;
   size: "pitch" | "bench";
   readOnly?: boolean;
+  isInspectable?: boolean;
   onOpenPicker: () => void;
   onToggleCaptain: () => void;
   onRemove: () => void;
@@ -849,15 +867,21 @@ function PlayerCard({
         <button
           type="button"
           onClick={onOpenPicker}
-          disabled={readOnly}
-          aria-label={player ? player.display_name : getSlotLabel(slotKey)}
+          disabled={readOnly && !isInspectable}
+          aria-label={
+            player && isInspectable
+              ? `Visualizza statistiche di ${player.display_name}`
+              : player
+                ? player.display_name
+                : getSlotLabel(slotKey)
+          }
           className={`relative flex items-center justify-center overflow-hidden rounded-full text-[10px] font-black shadow-lg transition ${avatarSize} ${
             player
               ? isCaptain
                 ? "border-2 border-amber-400 bg-[#0F1E2E] text-white"
                 : "border-2 border-[#22E6C3] bg-[#0F1E2E] text-white"
               : `${getMobileEmptySlotClass(slotKey)} hover:scale-105 sm:border-0 sm:bg-transparent sm:text-white sm:shadow-lg`
-          } ${readOnly ? "cursor-default disabled:opacity-100 hover:scale-100" : ""}`}
+          } ${readOnly && !isInspectable ? "cursor-default disabled:opacity-100 hover:scale-100" : ""} ${isInspectable ? "cursor-pointer hover:scale-105 hover:border-[#3AF5D4]" : ""}`}
         >
           {player ? (
             player.image_path ? (
@@ -941,12 +965,17 @@ function PlayerCard({
       ) : null}
 
       {player ? (
-        <span className="max-w-14 truncate rounded-full bg-black/80 px-1.5 py-0.5 text-center text-[8px] font-bold leading-tight text-white drop-shadow sm:max-w-[88px] sm:px-2 sm:text-[10px]">
-          <>
+        <>
+          <span className="max-w-14 truncate rounded-full bg-black/80 px-1.5 py-0.5 text-center text-[8px] font-bold leading-tight text-white drop-shadow sm:max-w-[88px] sm:px-2 sm:text-[10px]">
             <span className="sm:hidden">{getSurname(player.display_name)}</span>
             <span className="hidden sm:inline">{player.display_name}</span>
-          </>
-        </span>
+          </span>
+          {readOnly && typeof points === "number" ? (
+            <span className="rounded-full border border-[#22E6C3]/35 bg-[#123A3B]/90 px-1.5 py-0.5 text-[8px] font-black leading-none text-[#3AF5D4] shadow">
+              {formatPlayerPoints(points)} pt
+            </span>
+          ) : null}
+        </>
       ) : (
         <>
           <span className={`flex h-5 min-w-12 items-center justify-center rounded-md px-2 text-[10px] font-black sm:hidden ${getMobileRolePillClass(slotKey)}`}>
@@ -1015,7 +1044,9 @@ function PitchSlot({
   player,
   teamLogoById,
   isCaptain,
+  points,
   readOnly = false,
+  isInspectable = false,
   onOpenPicker,
   onToggleCaptain,
   onRemove,
@@ -1026,7 +1057,9 @@ function PitchSlot({
   player: TournamentPlayer | null;
   teamLogoById: Map<number, string>;
   isCaptain: boolean;
+  points?: number;
   readOnly?: boolean;
+  isInspectable?: boolean;
   onOpenPicker: () => void;
   onToggleCaptain: () => void;
   onRemove: () => void;
@@ -1048,8 +1081,10 @@ function PitchSlot({
         player={player}
         teamLogoById={teamLogoById}
         isCaptain={isCaptain}
+        points={points}
         size="pitch"
         readOnly={readOnly}
+        isInspectable={isInspectable}
         onOpenPicker={onOpenPicker}
         onToggleCaptain={onToggleCaptain}
         onRemove={onRemove}

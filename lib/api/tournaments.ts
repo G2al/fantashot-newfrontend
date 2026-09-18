@@ -5,6 +5,7 @@ import type {
   Tournament,
   TournamentDetail,
   TournamentRankingEntry,
+  TournamentPlayerDetails,
   TournamentTeamDetails,
 } from "@/types/tournament";
 
@@ -63,6 +64,24 @@ export async function getTournamentTeamDetails(
 ) {
   const response = await apiFetch<{ data: TournamentTeamDetails }>(
     `/tournaments/${tournamentId}/fantateams/${teamId}/details`,
+    { token: token ?? undefined }
+  );
+
+  return response.data;
+}
+
+/**
+ * Dettaglio punteggio di una singola riga della formazione. `fantaLineupId`
+ * identifica la voce in formazione/panchina, non il giocatore anagrafico.
+ */
+export async function getTournamentPlayerDetails(
+  tournamentId: number,
+  teamId: number,
+  fantaLineupId: number,
+  token?: string | null
+) {
+  const response = await apiFetch<{ data: TournamentPlayerDetails }>(
+    `/tournaments/${tournamentId}/fantateams/${teamId}/players/${fantaLineupId}`,
     { token: token ?? undefined }
   );
 

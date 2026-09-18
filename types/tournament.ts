@@ -222,6 +222,31 @@ export type TournamentTeamDetails = {
   module: TournamentModule;
 };
 
+export type TournamentPlayerStatistic = {
+  type: string;
+  label: string;
+  value: number | string | boolean | null;
+  points: number;
+};
+
+export type TournamentPlayerDetails = {
+  player: {
+    id?: number;
+    display_name: string;
+    position: PlayerPosition;
+    image_path?: string | null;
+  };
+  minutes_played: number;
+  is_captain: boolean;
+  points_breakdown: {
+    base_points: number;
+    bonus_points: number;
+    penalties_points: number;
+    total_points: number;
+  };
+  statistics: TournamentPlayerStatistic[];
+};
+
 export type PaginatedResponse<T> = {
   data: T[];
   links: {
