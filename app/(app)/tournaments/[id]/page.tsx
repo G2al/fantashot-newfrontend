@@ -47,6 +47,51 @@ export default function TournamentDetailPage({
   const [isBuilding, setIsBuilding] = useState(false);
   const [activeTab, setActiveTab] = useState<DetailTab>("formazione");
   const hasInitializedBuilder = useRef(false);
+  const [ranking, setRanking] = useState<TournamentRankingEntry[] | null>(null);
+  const [rankingError, setRankingError] = useState<string | null>(null);
+
+  // La classifica parte in parallelo al torneo e resta in memoria: aprendo il
+  // tab e' gia' pronta. Riaprendolo la si rinfresca in background (i punti
+  // cambiano a torneo in corso) senza mai rimostrare lo scheletro.
+  const loadRanking = useCallback(
+    async (isActive: () => boolean) => {
+      if (!Number.isInteger(tournamentId) || tournamentId <= 0) return;
+
+      try {
+        const data = await getTournamentRanking(tournamentId, token);
+        if (!isActive()) return;
+        setRanking(data);
+        setRankingError(null);
+      } catch (requestError) {
+        if (!isActive()) return;
+        logFrontendError(
+          "Caricamento della classifica non riuscito",
+          { tournamentId },
+          requestError
+        );
+        setRankingError("Impossibile caricare la classifica.");
+      }
+    },
+    [tournamentId, token]
+  );
+
+  useEffect(() => {
+    let isActive = true;
+    void Promise.resolve().then(() => loadRanking(() => isActive));
+    return () => {
+      isActive = false;
+    };
+  }, [loadRanking]);
+
+  useEffect(() => {
+    if (activeTab !== "classifica") return;
+
+    let isActive = true;
+    void Promise.resolve().then(() => loadRanking(() => isActive));
+    return () => {
+      isActive = false;
+    };
+  }, [activeTab, loadRanking]);
   const [selectedPlayer, setSelectedPlayer] = useState<{
     fantaLineupId: number;
     name: string;
@@ -278,9 +323,9 @@ export default function TournamentDetailPage({
                 />
               ) : activeTab === "classifica" ? (
                 <ClassificaPanel
-                  key={tournamentId}
                   tournament={tournament}
-                  token={token}
+                  entries={ranking}
+                  error={rankingError}
                   ownTeamId={tournament.user_fanta_team?.id}
                 />
               ) : (
@@ -349,41 +394,20 @@ function getRankingOwner(entry: TournamentRankingEntry) {
 
 function ClassificaPanel({
   tournament,
-  token,
+  entries,
+  error,
   ownTeamId,
 }: {
   tournament: TournamentDetail;
-  token: string | null;
+  entries: TournamentRankingEntry[] | null;
+  error: string | null;
   ownTeamId?: number;
 }) {
-  const tournamentId = tournament.id;
-  const [entries, setEntries] = useState<TournamentRankingEntry[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [previewTeamId, setPreviewTeamId] = useState<number | null>(null);
 
-  useEffect(() => {
-    let isActive = true;
-
-    getTournamentRanking(tournamentId, token)
-      .then((data) => {
-        if (isActive) setEntries(data);
-      })
-      .catch((requestError) => {
-        if (!isActive) return;
-        logFrontendError(
-          "Caricamento della classifica non riuscito",
-          { tournamentId },
-          requestError
-        );
-        setError("Impossibile caricare la classifica.");
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [tournamentId, token]);
-
-  if (error) {
+  // Errore solo se non c'e' nessun dato da mostrare: un refresh in background
+  // fallito non deve cancellare una classifica gia' caricata.
+  if (error && !entries) {
     return (
       <p className="rounded-lg border border-red-500/20 bg-red-950/35 px-4 py-3 text-sm text-red-200">
         {error}
