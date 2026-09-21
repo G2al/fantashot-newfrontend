@@ -695,7 +695,7 @@ function FixtureRow({ fixture }: { fixture: TournamentFixture }) {
             </span>
             {fixture.home_team.name}
           </span>
-          <span className="text-[9px] font-black uppercase text-zinc-600">vs</span>
+          <FixtureScore fixture={fixture} />
           <span className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
             <span className="h-6 w-6 shrink-0 rounded-full bg-white/5 p-0.5">
               {fixture.away_team.logo ? (
@@ -718,7 +718,7 @@ function FixtureRow({ fixture }: { fixture: TournamentFixture }) {
             </p>
             <div className="flex min-w-0 items-center gap-2.5">
               <TeamBadge name={fixture.home_team.name} logo={fixture.home_team.logo} />
-              <span className="shrink-0 text-[9px] font-black uppercase text-zinc-600">vs</span>
+              <FixtureScore fixture={fixture} />
               <TeamBadge name={fixture.away_team.name} logo={fixture.away_team.logo} />
             </div>
           </div>
@@ -730,6 +730,31 @@ function FixtureRow({ fixture }: { fixture: TournamentFixture }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function FixtureScore({ fixture }: { fixture: TournamentFixture }) {
+  const { home_team_score: home, away_team_score: away, state } = fixture;
+
+  if (home === null || away === null) {
+    return <span className="shrink-0 text-[9px] font-black uppercase text-zinc-600">vs</span>;
+  }
+
+  const isFinal = ["FT", "AET", "FT_PEN"].includes(state);
+
+  return (
+    <span className="flex shrink-0 flex-col items-center gap-0.5">
+      <span
+        className={`rounded-md px-2 py-0.5 font-mono text-sm font-black tabular-nums ${
+          isFinal ? "bg-white/10 text-white" : "bg-[#123A3B] text-[#22E6C3]"
+        }`}
+      >
+        {home} - {away}
+      </span>
+      <span className="text-[9px] font-black uppercase tracking-wide text-zinc-500">
+        {isFinal ? "Finale" : "Live"}
+      </span>
+    </span>
   );
 }
 

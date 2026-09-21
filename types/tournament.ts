@@ -141,7 +141,11 @@ export type FixtureTeam = {
 export type TournamentFixture = {
   id: number;
   name: string;
+  /** Codice Sportmonks: "NS" non iniziata, "FT" finita, altri = in corso/sospesa. */
   state: string;
+  /** Null finche' la partita non e' iniziata. */
+  home_team_score: number | null;
+  away_team_score: number | null;
   start_date: string;
   home_team: FixtureTeam;
   away_team: FixtureTeam;
