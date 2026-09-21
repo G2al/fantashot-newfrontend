@@ -919,11 +919,13 @@ function PlayerCard({
           }
           className={`relative flex items-center justify-center overflow-hidden rounded-full text-[10px] font-black shadow-lg transition ${avatarSize} ${
             player
-              ? isCaptain
-                ? "border-2 border-amber-400 bg-[#0F1E2E] text-white"
-                : didNotPlay
-                  ? "border-2 border-zinc-600 bg-[#0F1E2E] text-white"
-                  : "border-2 border-[#22E6C3] bg-[#0F1E2E] text-white"
+              ? `border-2 bg-[#0F1E2E] text-white ring-1 ring-[#06111B]/70 sm:ring-0 ${getMobileFilledRingClass(slotKey, didNotPlay)} ${
+                  isCaptain
+                    ? "sm:border-amber-400"
+                    : didNotPlay
+                      ? "sm:border-zinc-600"
+                      : "sm:border-[#22E6C3]"
+                }`
               : `${getMobileEmptySlotClass(slotKey)} hover:scale-105 sm:border-0 sm:bg-transparent sm:text-white sm:shadow-lg`
           } ${readOnly && !isInspectable ? "cursor-default disabled:opacity-100 hover:scale-100" : ""} ${isInspectable ? "cursor-pointer hover:scale-105 hover:border-[#3AF5D4]" : ""}`}
         >
@@ -975,9 +977,24 @@ function PlayerCard({
           </span>
         ) : null}
 
+        {player ? (
+          <span
+            aria-hidden="true"
+            className={`absolute -bottom-1 -left-1 z-20 flex h-4 w-4 items-center justify-center rounded-full border border-[#06111B] text-[8px] font-black shadow sm:hidden ${getMobileRoleBadgeClass(slotKey)}`}
+          >
+            {getRoleShortLabel(slotKey)}
+          </span>
+        ) : null}
+
         {player && isCaptain ? (
-          <span className="absolute -right-1 -top-1 z-20 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[8px] font-black text-black shadow sm:-right-1.5 sm:-top-1.5 sm:h-5 sm:w-5 sm:text-[9px]">
-            C
+          <span
+            title="Capitano"
+            className="absolute -right-1 -top-1 z-20 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-black shadow sm:-right-1.5 sm:-top-1.5 sm:h-5 sm:w-5 sm:text-[9px] sm:font-black"
+          >
+            <span className="sm:hidden">
+              <StarIcon />
+            </span>
+            <span className="hidden sm:inline">C</span>
           </span>
         ) : null}
 
@@ -985,7 +1002,7 @@ function PlayerCard({
           <span
             title={substitution.status === "in" ? "Entra al posto di un titolare" : "Sostituito da una riserva"}
             aria-label={substitution.status === "in" ? "Entra" : "Esce"}
-            className={`absolute -bottom-1 -left-1 z-20 grid h-4 w-4 place-items-center rounded-full border border-[#06111B] shadow sm:h-5 sm:w-5 ${
+            className={`absolute -left-1 -top-1 z-20 grid sm:-bottom-1 sm:top-auto h-4 w-4 place-items-center rounded-full border border-[#06111B] shadow sm:h-5 sm:w-5 ${
               substitution.status === "in" ? "bg-green-500 text-[#06111B]" : "bg-red-500 text-white"
             }`}
           >
@@ -1088,6 +1105,29 @@ function getMobileRolePillClass(slotKey: string) {
     GOALKEEPER: "bg-[#F6C343] text-white",
     DEFENDER: "bg-[#3B82F6] text-white",
     MIDFIELDER: "bg-[#22C55E] text-white",
+    ATTACKER: "bg-[#EF4444] text-white",
+    COACH: "bg-[#EF4444] text-white",
+  }[getRequiredPositionForSlot(slotKey)];
+}
+
+/** Anello del giocatore assegnato: colore del ruolo, attenuato se non ha giocato. */
+function getMobileFilledRingClass(slotKey: string, dimmed: boolean) {
+  const ring = {
+    GOALKEEPER: ["border-[#F6C343]", "border-[#F6C343]/45"],
+    DEFENDER: ["border-[#3B82F6]", "border-[#3B82F6]/45"],
+    MIDFIELDER: ["border-[#22C55E]", "border-[#22C55E]/45"],
+    ATTACKER: ["border-[#EF4444]", "border-[#EF4444]/45"],
+    COACH: ["border-[#EF4444]", "border-[#EF4444]/45"],
+  }[getRequiredPositionForSlot(slotKey)];
+
+  return dimmed ? ring[1] : ring[0];
+}
+
+function getMobileRoleBadgeClass(slotKey: string) {
+  return {
+    GOALKEEPER: "bg-[#F6C343] text-[#06111B]",
+    DEFENDER: "bg-[#3B82F6] text-white",
+    MIDFIELDER: "bg-[#22C55E] text-[#06111B]",
     ATTACKER: "bg-[#EF4444] text-white",
     COACH: "bg-[#EF4444] text-white",
   }[getRequiredPositionForSlot(slotKey)];
