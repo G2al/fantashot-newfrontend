@@ -254,7 +254,7 @@ export default function TournamentDetailPage({
                 ) : null}
               </div>
 
-              <div className="flex flex-col gap-3 sm:mt-8 lg:mt-0 lg:w-full lg:max-w-[600px] lg:justify-self-end">
+              <div className="flex flex-col gap-3 sm:mt-8 lg:mt-12 lg:w-full lg:max-w-[600px] lg:justify-self-end">
               {tournament.status === "enrollments" ? (
                 <EnrollmentCountdownHero endDate={tournament.enrollments_end_date} />
               ) : null}
