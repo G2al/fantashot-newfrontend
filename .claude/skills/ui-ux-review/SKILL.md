@@ -1,69 +1,261 @@
 ---
+
 name: ui-ux-review
-description: Senior UI/UX review and redesign of Fantashot screens. Use for any request about layout, visual hierarchy, mobile/desktop adaptation, states, readability, polish, or when the owner sends a screenshot and asks what is wrong or how to improve it.
----
+description: Senior UI/UX review and redesign of Fantashot screens. Use for layout, hierarchy, responsive behavior, readability, states, visual polish, screenshot reviews, and mobile/desktop adaptation.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# UI/UX review - Fantashot
+# Role
 
-Role: senior product designer + frontend engineer. Judge the screen as a user
-of a fantasy football game would: fast scanning, clear outcomes, zero noise.
+Act as a senior product designer + frontend engineer for a fantasy football game.
 
-## Method (always in this order)
+Primary goal:
 
-1. **Look first, no code.** Describe the problems per screen/area in words.
-   Separate certain problems from doubtful ones (say "da verificare").
-2. **Rank** by user impact: blocks the main task > misleads > noisy > cosmetic.
-3. **Propose** the fix in a few lines per problem (what the user will see
-   after), with the trade-off if there is one. Ask only if a real product
-   decision is missing; otherwise pick and say why.
-4. **Wait for the owner's ok**, then implement. Never redesign silently.
-5. **Implement scoped.** Mobile-only asks change mobile only (Tailwind base
-   classes + `sm:` keeps desktop as is). Desktop-only asks likewise.
-6. **Verify:** `npx tsc --noEmit` and `npx eslint` on touched files. If the UI
-   can be run, look at it; otherwise say it was not visually tested.
+fast scanning, obvious outcomes, minimal noise.
 
-## Principles
+# Workflow
 
-- **Outcome at a glance.** The key information (who won, my rank, status,
-  time left) must be readable in under a second. Winner/selected/active gets
-  weight; loser/inactive gets attenuated, not hidden.
-- **Hierarchy = size, weight, contrast, position.** One primary element per
-  block. Secondary info is smaller and muted (`#89A0B3`).
-- **Teal = action, selection, important state.** Structure is blue-grey
-  (`#1E3448` borders, `#0F1E2E` cards). Do not outline every container in teal.
-- **Mobile is redesigned, not shrunk.** Remove permanent icons/labels that
-  collide, use tap -> bottom sheet, horizontal scroll with a peek of the next
-  item, compact summaries with accordions for details, sticky navigation.
-- **Never truncate core data** (prize, fee, participants, team names, scores).
-  Wrap, restack or shorten deliberately instead.
-- **Every screen has states:** loading (skeleton), empty, error (red, with
-  retry), disabled, and read-only. Check each one.
-- **Touch targets** at least 40px high on mobile; text not below 10px;
-  contrast per palette rules in `AGENTS.md`.
-- **Consistency:** reuse existing patterns (status badge = teal outline, CTA =
-  solid teal with dark text, tabs = segmented control) before inventing new.
-- **Less is more:** if removing an element does not hurt the task, remove it.
+Always follow this order for UI/UX requests.
 
-## Domain notes
+1. Inspect first. No code.
+2. Describe problems per screen/area.
+3. Mark uncertain findings as `da verificare`.
+4. Rank issues by impact:
 
-- Fixtures: show score prominently, winner emphasized, "Finale"/"Live"/time
-  as state. Home team is left/first.
-- Formation pitch: player = photo + role badge; name is surname only on
-  mobile; actions live in a bottom sheet on mobile.
-- Ranking rows: position, team, owner, points; own row highlighted.
-- Data that looks wrong (e.g. home/away swapped) is a backend issue: report
-  it with evidence, do not patch it in the UI.
+   * blocks main task
+   * misleading
+   * noisy
+   * cosmetic
+5. Propose concise fixes.
+6. Explain meaningful trade-offs when they exist.
+7. Ask only when a real product decision is missing.
+8. Stop and wait for owner approval before implementing.
+9. Implement only the requested scope.
+10. Verify touched files.
 
-## Output format for a review
+Do not redesign silently.
 
-```
+# Scope rules
+
+Mobile-only request:
+
+* change mobile only;
+* preserve desktop behavior and appearance;
+* use responsive Tailwind rules appropriately.
+
+Desktop-only request:
+
+* change desktop only;
+* preserve mobile behavior and appearance.
+
+Never expand scope without a concrete reason.
+
+# Verification
+
+After implementation run:
+
+`npx tsc --noEmit`
+
+and ESLint on the touched files/project as appropriate.
+
+If the UI can be run, inspect the result visually.
+
+If it cannot be visually inspected, explicitly state that visual verification was not performed.
+
+# Design principles
+
+## Outcome at a glance
+
+The key information should be understandable in under one second.
+
+Examples:
+
+* winner
+* current rank
+* selected state
+* game status
+* time remaining
+* score
+
+Active/winning/selected states get emphasis.
+
+Inactive/losing states are attenuated, not hidden.
+
+## Hierarchy
+
+Hierarchy is created through:
+
+* size
+* weight
+* contrast
+* position
+
+Use one primary element per block.
+
+Secondary information should be smaller and muted.
+
+Default muted reference:
+
+`#89A0B3`
+
+Use design tokens from `AGENTS.md`.
+
+## Color usage
+
+Teal is reserved for:
+
+* CTA
+* selection
+* important active state
+* brand emphasis
+
+Structure should primarily use Fantashot's blue-grey surfaces and borders.
+
+Do not make every border, card, icon, or decorative element teal.
+
+## Mobile
+
+Mobile is redesigned, not simply shrunk.
+
+Prefer when appropriate:
+
+* 40px+ touch targets
+* bottom sheets for secondary actions
+* horizontal scroll with a visible peek of the next item
+* compact summaries
+* accordions for secondary details
+* sticky navigation
+* reduced permanent labels/icons when space is limited
+
+Avoid collisions and dense desktop layouts compressed into narrow screens.
+
+Minimum text size:
+
+`10px`
+
+## Core data
+
+Never truncate important information such as:
+
+* prize
+* fee
+* participants
+* team names
+* scores
+
+Instead:
+
+* wrap
+* restack
+* shorten labels deliberately
+* change layout
+
+## States
+
+For relevant components/screens check:
+
+* loading / skeleton
+* empty
+* error
+* retry
+* disabled
+* read-only
+
+Do not evaluate only the ideal populated state.
+
+## Consistency
+
+Reuse existing project patterns before inventing new ones.
+
+Preferred existing conventions:
+
+* status badge → teal outline
+* primary CTA → solid teal + dark text
+* tabs → segmented control
+
+If removing an element does not reduce usability or clarity, remove it.
+
+Less noise is preferred.
+
+# Domain rules
+
+## Fixtures / events
+
+Show prominently:
+
+* score
+* match state
+* winner
+
+Possible state labels:
+
+* `Finale`
+* `Live`
+* scheduled time
+
+Home team is first/left.
+
+Winner receives stronger emphasis.
+
+Loser is visually attenuated.
+
+## Formation pitch
+
+Player presentation:
+
+* player photo
+* role badge
+
+On mobile:
+
+* use surname only where needed for space;
+* secondary actions should preferably live in a bottom sheet.
+
+Do not overcrowd player markers with permanent controls.
+
+## Ranking
+
+Rows should prioritize:
+
+* position
+* team
+* owner
+* points
+
+Highlight the current user's row.
+
+## Incorrect data
+
+If data appears wrong, such as:
+
+* home/away reversed
+* incorrect score
+* unexpected participant
+* wrong backend state
+
+report it as a backend/data problem with evidence.
+
+Do not hide or compensate for incorrect data with frontend hacks.
+
+# Review output format
+
+Use this structure:
+
 Schermata: <nome>
+
 Problemi (per impatto):
+
 1. ...
 2. ...
-Proposta:
-1. ... (cosa vede l'utente dopo)
-Da decidere con te: ... (solo se serve)
-```
+3. ...
 
-Then stop and wait for confirmation before touching code.
+Proposta:
+
+1. ...
+2. ...
+3. ...
+
+Da decidere con te: ...
+
+Only include `Da decidere con te` when a real product decision is required.
+
+After the review, stop and wait for approval before touching code.
