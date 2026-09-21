@@ -26,6 +26,9 @@ const GROUP_DOT: Record<TournamentGroup, string> = {
   closed: "bg-zinc-600",
 };
 
+/** Mobile: griglia come prima. Desktop: i conclusi diventano righe compatte. */
+const CLOSED_LIST_CLASS = "grid grid-cols-1 gap-3 lg:flex lg:flex-col lg:gap-2";
+
 const GRID_CLASS =
   "grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4 xl:grid-cols-3";
 
@@ -244,7 +247,7 @@ export function TournamentLobby() {
                   {GROUP_LABEL[section.group]}
                   <span className="text-zinc-600">{section.items.length}</span>
                 </h3>
-                <div className={GRID_CLASS}>
+                <div className={section.group === "closed" ? CLOSED_LIST_CLASS : GRID_CLASS}>
                   {section.items.map((tournament) => (
                     <TournamentCard key={tournament.id} tournament={tournament} />
                   ))}
@@ -253,7 +256,13 @@ export function TournamentLobby() {
             ))}
           </div>
         ) : (
-          <div className={`mt-4 ${GRID_CLASS}`}>
+          <div
+            className={`mt-4 ${
+              visibleTournaments.every((tournament) => getTournamentGroup(tournament) === "closed")
+                ? CLOSED_LIST_CLASS
+                : GRID_CLASS
+            }`}
+          >
             {visibleTournaments.map((tournament) => (
               <TournamentCard key={tournament.id} tournament={tournament} />
             ))}

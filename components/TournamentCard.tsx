@@ -32,8 +32,12 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
   const isArchived = ["finished", "paid", "cancelled"].includes(tournament.status);
 
   return (
+    <>
+    {isArchived ? (
+      <CompactTournamentRow tournament={tournament} countdown={countdown} />
+    ) : null}
     <article
-      className={`group overflow-hidden rounded-lg border bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 lg:flex lg:flex-col ${getCardToneClassName(
+      className={`group overflow-hidden rounded-lg border bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 ${isArchived ? "lg:hidden" : "lg:flex lg:flex-col"} ${getCardToneClassName(
         tournament.status,
       )}`}
     >
@@ -85,7 +89,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
       <div className="flex min-w-0 flex-1 flex-col p-3.5 lg:p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-[#22E6C3]">
+            <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-[#22E6C3] lg:text-zinc-500">
               {isMultiLeague
                 ? (
                     <>
@@ -97,9 +101,10 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
                   )
                 : (primaryLeague?.name ?? "Campionato da definire")}
             </p>
-            <h2 className="mt-1 line-clamp-2 text-base font-bold leading-tight text-white lg:text-lg">
+            <h2 className="mt-1 line-clamp-2 text-base font-bold leading-tight text-white lg:text-xl">
               {tournament.title}
             </h2>
+            {tournament.is_user_registered ? <RegisteredPill className="mt-1.5 hidden lg:inline-flex" /> : null}
           </div>
           <span
             className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide shadow lg:hidden ${getStatusBadgeClassName(
@@ -116,7 +121,11 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
         <div className="mt-3 grid grid-cols-3 gap-2 border-t border-white/8 pt-3">
           <Metric
             label="Montepremi"
-            value={formatPrizePool(tournament.prize_pool)}
+            value={
+              tournament.status === "enrollments" && tournament.prize_pool.amount === 0
+                ? "In crescita"
+                : formatPrizePool(tournament.prize_pool)
+            }
           />
           <Metric label="Quota" value={formatMoney(tournament.buy_in)} />
           <Metric
@@ -124,6 +133,16 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             value={`${tournament.enrolled_users_count}/${tournament.max_participants}`}
           />
         </div>
+        {tournament.status === "enrollments" && tournament.max_participants > 0 ? (
+          <div className="mt-2 hidden h-1 overflow-hidden rounded-full bg-white/10 lg:block" title="Posti occupati">
+            <div
+              className="h-full rounded-full bg-[#22E6C3]"
+              style={{
+                width: `${Math.min(100, Math.round((tournament.enrolled_users_count / tournament.max_participants) * 100))}%`,
+              }}
+            />
+          </div>
+        ) : null}
 
         <div className="mt-auto flex items-end justify-between gap-3 pt-3">
           <div className="min-w-0 text-[11px] text-zinc-500">
@@ -141,6 +160,72 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
         </div>
       </div>
     </article>
+    </>
+  );
+}
+
+/** Solo desktop: i tornei conclusi sono storico, una riga compatta basta. */
+function CompactTournamentRow({
+  tournament,
+  countdown,
+}: {
+  tournament: Tournament;
+  countdown: string | null;
+}) {
+  return (
+    <article
+      className={`hidden items-center gap-5 rounded-lg border bg-[#0F1E2E]/88 px-4 py-3 transition lg:grid lg:grid-cols-[minmax(0,1.5fr)_110px_90px_minmax(0,1.3fr)_auto] ${getCardToneClassName(
+        tournament.status,
+      )}`}
+    >
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${getStatusBadgeClassName(
+              tournament.status,
+            )}`}
+          >
+            {STATUS_LABEL[tournament.status]}
+          </span>
+          {tournament.is_user_registered ? <RegisteredPill /> : null}
+        </div>
+        <h2 className="mt-1 truncate text-base font-bold text-white">{tournament.title}</h2>
+        <div className="mt-1.5 flex items-center gap-1.5">
+          {tournament.leagues.slice(0, 6).map((league) => (
+            <LeagueLogo key={league.id} logoUrl={league.logo} label={league.name} />
+          ))}
+        </div>
+      </div>
+      <Metric label="Montepremi" value={formatPrizePool(tournament.prize_pool)} />
+      <Metric
+        label="Iscritti"
+        value={`${tournament.enrolled_users_count}/${tournament.max_participants}`}
+      />
+      <div className="min-w-0 text-[11px] text-zinc-500">
+        <CardFooterInfo tournament={tournament} countdown={countdown} />
+      </div>
+      <Link
+        href={`/tournaments/${tournament.id}`}
+        className={`flex h-9 shrink-0 items-center justify-center rounded-md px-3 text-xs font-bold transition ${getActionClassName(
+          tournament,
+        )}`}
+      >
+        {getActionLabel(tournament)}
+      </Link>
+    </article>
+  );
+}
+
+function RegisteredPill({ className = "inline-flex" }: { className?: string }) {
+  return (
+    <span
+      className={`items-center gap-1 rounded-full border border-[#1D6D68] bg-[#123A3B] px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#3AF5D4] ${className}`}
+    >
+      <svg aria-hidden="true" className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12l5 5 9-10" />
+      </svg>
+      Iscritto
+    </span>
   );
 }
 
