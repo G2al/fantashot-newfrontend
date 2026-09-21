@@ -6,7 +6,10 @@ import { LeagueLogo } from "@/components/lobby/shared";
 import { EventsPanel } from "@/components/tournament/EventsPanel";
 import { RegolamentoContent } from "@/components/tournament/RegolamentoContent";
 import { TeamBuilder } from "@/components/tournament/TeamBuilder";
-import { TeamPreviewModal } from "@/components/tournament/TeamPreviewModal";
+import {
+  PlayerStatisticsModal,
+  TeamPreviewModal,
+} from "@/components/tournament/TeamPreviewModal";
 import { useAuth } from "@/hooks/use-auth";
 import { useCountdown } from "@/hooks/use-countdown";
 import { getTournament, getTournamentRanking } from "@/lib/api/tournaments";
@@ -15,6 +18,7 @@ import { formatMoney, formatPrizePool } from "@/lib/format";
 import { logFrontendError } from "@/lib/frontend-logger";
 import { getModuleCounts } from "@/lib/tournament-team";
 import type {
+  FantaTeamFormationEntry,
   TournamentDetail,
   TournamentRankingEntry,
 } from "@/types/tournament";
@@ -43,6 +47,16 @@ export default function TournamentDetailPage({
   const [isBuilding, setIsBuilding] = useState(false);
   const [activeTab, setActiveTab] = useState<DetailTab>("formazione");
   const hasInitializedBuilder = useRef(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<{
+    fantaLineupId: number;
+    name: string;
+  } | null>(null);
+
+  function handleOwnPlayerInspect(entry: FantaTeamFormationEntry) {
+    const fantaLineupId = entry.fanta_lineup_id ?? entry.id;
+    if (!Number.isInteger(fantaLineupId) || fantaLineupId <= 0) return;
+    setSelectedPlayer({ fantaLineupId, name: entry.name });
+  }
 
   const reload = useCallback(
     async (isActive: () => boolean = () => true) => {
@@ -247,6 +261,7 @@ export default function TournamentDetailPage({
                       module_id: tournament.user_fanta_team.module_id,
                       formation_data: tournament.user_fanta_team.formation_data,
                     }}
+                    onPlayerInspect={handleOwnPlayerInspect}
                     onCancel={() => undefined}
                   />
                 ) : (
@@ -273,6 +288,16 @@ export default function TournamentDetailPage({
               )}
             </div>
           </section>
+
+          {selectedPlayer && tournament.user_fanta_team ? (
+            <PlayerStatisticsModal
+              tournamentId={tournament.id}
+              teamId={tournament.user_fanta_team.id}
+              fantaLineupId={selectedPlayer.fantaLineupId}
+              fallbackName={selectedPlayer.name}
+              onClose={() => setSelectedPlayer(null)}
+            />
+          ) : null}
         </div>
       )}
     </div>

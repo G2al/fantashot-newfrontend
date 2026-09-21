@@ -168,7 +168,7 @@ export function TeamPreviewModal({
   );
 }
 
-function PlayerStatisticsModal({
+export function PlayerStatisticsModal({
   tournamentId,
   teamId,
   fantaLineupId,

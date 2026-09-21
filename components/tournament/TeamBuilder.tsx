@@ -352,7 +352,7 @@ export function TeamBuilder({
 
       <div className={isReadOnly ? "" : "grid xl:grid-cols-[minmax(0,1fr)_310px]"}>
         <div className="min-w-0 xl:border-r xl:border-[#22E6C3]/20">
-          <div className="relative mx-auto aspect-[3/4] w-full max-w-[1120px] sm:aspect-[4/3] xl:-mt-12">
+          <div className={`relative mx-auto ${isReadOnly ? "aspect-[5/8]" : "aspect-[3/4]"} w-full max-w-[1120px] sm:aspect-[4/3] xl:-mt-12`}>
             <PitchBackground />
 
             <div className="absolute left-1/2 top-2 z-30 w-28 -translate-x-1/2 sm:hidden">
@@ -995,7 +995,7 @@ function PlayerCard({
           </span>
           {readOnly && didNotPlay ? (
             <span className="rounded-full border border-zinc-600 bg-zinc-800/90 px-1.5 py-0.5 text-[8px] font-black uppercase leading-none tracking-wide text-zinc-400 shadow">
-              Non giocato
+              Assente
             </span>
           ) : readOnly && typeof points === "number" ? (
             <span className="rounded-full border border-[#22E6C3]/35 bg-[#123A3B]/90 px-1.5 py-0.5 text-[8px] font-black leading-none text-[#3AF5D4] shadow sm:px-2 sm:py-1 sm:text-[10px]">
