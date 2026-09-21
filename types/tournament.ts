@@ -53,6 +53,20 @@ export type Tournament = {
   leagues: League[];
   /** Null se il torneo non ha una copertina caricata da Filament. */
   cover_image_url: string | null;
+  /** Solo torneo finished/paid. Campi richiesti al backend: assenti finche' non li espone. */
+  winner?: TournamentStanding | null;
+  /** Solo torneo in-progress. */
+  leader?: TournamentStanding | null;
+  fixtures_count?: number;
+  fixtures_finished_count?: number;
+};
+
+export type TournamentStanding = {
+  fanta_team_id: number;
+  team_name: string;
+  points: number;
+  user: { id: number; name: string; username?: string };
+  prize?: Money | null;
 };
 
 export type TournamentModuleSchema = Record<string, { x: number; y: number }>;
@@ -117,6 +131,10 @@ export type FantaTeamFormationEntry = {
   team_images: string[];
   minutes_played: number;
   /** False per titolare assente e per riserva non entrata. Decide il backend, non calcolare in frontend. */
+  /** Punti finali con bonus/malus: e' il numero da mostrare. `points` in formation_data e' solo la parte base. */
+  total_points?: number;
+  /** Bonus applicato (capitano), 0 per gli altri. */
+  bonus_points?: number;
   counts_for_points?: boolean;
   /** "out" titolare sostituito, "in" riserva entrata; with_id = fanta_lineup_id dell'altro giocatore. */
   substitution?: { status: "in" | "out"; with_id: number } | null;
@@ -208,6 +226,8 @@ export type TournamentRankingEntry = {
   user: TournamentRankingUser;
   tournament_id: number;
   module_id: number;
+  /** Premio della posizione (richiesto al backend), null se non premiata. */
+  prize?: Money | null;
 };
 
 /**

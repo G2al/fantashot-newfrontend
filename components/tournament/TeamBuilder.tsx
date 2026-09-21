@@ -386,7 +386,8 @@ export function TeamBuilder({
                   player={player}
                   teamLogoById={teamLogoById}
                   isCaptain={Boolean(assignment?.is_captain)}
-                  points={formationEntry?.points}
+                  points={playerTotalPoints(formationEntry)}
+                  bonusPoints={formationEntry?.bonus_points}
                   didNotPlay={showPlayedState && !entryCountsForPoints(formationEntry)}
                   substitution={showPlayedState ? (formationEntry?.substitution ?? null) : null}
                   readOnly={isReadOnly}
@@ -420,7 +421,8 @@ export function TeamBuilder({
                       player={player}
                       teamLogoById={teamLogoById}
                       isCaptain={Boolean(assignment?.is_captain)}
-                      points={formationEntry?.points}
+                      points={playerTotalPoints(formationEntry)}
+                  bonusPoints={formationEntry?.bonus_points}
                       didNotPlay={showPlayedState && !entryCountsForPoints(formationEntry)}
                   substitution={showPlayedState ? (formationEntry?.substitution ?? null) : null}
                       size="bench"
@@ -839,6 +841,12 @@ function getTournamentStatusLabel(status: TournamentDetail["status"]) {
   }[status];
 }
 
+/** Il numero da mostrare e' sempre total_points; points e' solo la parte base. */
+function playerTotalPoints(entry?: FantaTeamFormationEntry): number | undefined {
+  if (!entry) return undefined;
+  return typeof entry.total_points === "number" ? entry.total_points : entry.points;
+}
+
 /** Fonte di verita' e' il backend; il fallback sui minuti serve solo se il campo manca. */
 function entryCountsForPoints(entry?: FantaTeamFormationEntry): boolean {
   if (!entry) return true;
@@ -863,6 +871,7 @@ function PlayerCard({
   teamLogoById,
   isCaptain,
   points,
+  bonusPoints,
   didNotPlay = false,
   substitution = null,
   size,
@@ -877,6 +886,7 @@ function PlayerCard({
   teamLogoById: Map<number, string>;
   isCaptain: boolean;
   points?: number;
+  bonusPoints?: number;
   didNotPlay?: boolean;
   substitution?: FantaTeamFormationEntry["substitution"];
   size: "pitch" | "bench";
@@ -1020,6 +1030,17 @@ function PlayerCard({
             <span className="rounded-full border border-zinc-600 bg-zinc-800/90 px-1.5 py-0.5 text-[8px] font-black uppercase leading-none tracking-wide text-zinc-400 shadow">
               {size === "bench" ? "Riserva" : "Assente"}
             </span>
+          ) : readOnly && isCaptain && typeof points === "number" ? (
+            <span className="flex flex-col items-center gap-0.5">
+              <span className="rounded-full border border-amber-400/70 bg-amber-400/15 px-2 py-0.5 text-[10px] font-black leading-none text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)] sm:px-2.5 sm:py-1 sm:text-sm">
+                {formatPlayerPoints(points)} pt
+              </span>
+              {bonusPoints ? (
+                <span className="text-[8px] font-black leading-none text-amber-400/90 sm:text-[10px]">
+                  +{formatPlayerPoints(bonusPoints)} bonus
+                </span>
+              ) : null}
+            </span>
           ) : readOnly && typeof points === "number" ? (
             <span className="rounded-full border border-[#22E6C3]/35 bg-[#123A3B]/90 px-1.5 py-0.5 text-[8px] font-black leading-none text-[#3AF5D4] shadow sm:px-2 sm:py-1 sm:text-[10px]">
               {formatPlayerPoints(points)} pt
@@ -1095,6 +1116,7 @@ function PitchSlot({
   teamLogoById,
   isCaptain,
   points,
+  bonusPoints,
   didNotPlay = false,
   substitution = null,
   readOnly = false,
@@ -1110,6 +1132,7 @@ function PitchSlot({
   teamLogoById: Map<number, string>;
   isCaptain: boolean;
   points?: number;
+  bonusPoints?: number;
   didNotPlay?: boolean;
   substitution?: FantaTeamFormationEntry["substitution"];
   readOnly?: boolean;
@@ -1136,6 +1159,7 @@ function PitchSlot({
         teamLogoById={teamLogoById}
         isCaptain={isCaptain}
         points={points}
+        bonusPoints={bonusPoints}
         didNotPlay={didNotPlay}
         substitution={substitution}
         size="pitch"

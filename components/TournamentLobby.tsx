@@ -5,11 +5,29 @@ import { TournamentCard } from "@/components/TournamentCard";
 import { CustomDropdown, LeagueLogo } from "@/components/lobby/shared";
 import {
   GENERIC_TOURNAMENTS_ERROR,
+  TOURNAMENT_GROUP_ORDER,
+  getTournamentGroup,
   useLobbyFilters,
+  type TournamentGroup,
   type PriceFilter,
   type SortFilter,
   type StatusFilter,
 } from "@/components/lobby/LobbyFiltersProvider";
+
+const GROUP_LABEL: Record<TournamentGroup, string> = {
+  open: "Aperti",
+  live: "In corso",
+  closed: "Conclusi",
+};
+
+const GROUP_DOT: Record<TournamentGroup, string> = {
+  open: "bg-[#22E6C3]",
+  live: "bg-[#22E6C3] animate-pulse",
+  closed: "bg-zinc-600",
+};
+
+const GRID_CLASS =
+  "grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4 xl:grid-cols-3";
 
 const STATUS_OPTIONS: Array<{ label: string; value: StatusFilter }> = [
   { label: "Tutti gli stati", value: "all" },
@@ -61,6 +79,15 @@ export function TournamentLobby() {
     setCurrentPage,
     resetToFirstPage,
   } = useLobbyFilters();
+  // Le sezioni servono solo se i risultati mescolano piu' stati.
+  const showSections =
+    new Set(filteredTournaments.map(getTournamentGroup)).size > 1;
+  const sections = TOURNAMENT_GROUP_ORDER.map((group) => ({
+    group,
+    items: visibleTournaments.filter(
+      (tournament) => getTournamentGroup(tournament) === group,
+    ),
+  })).filter((section) => section.items.length > 0);
   const activeFilterCount =
     Number(statusFilter !== "all") +
     Number(priceFilter !== "all") +
@@ -208,11 +235,30 @@ export function TournamentLobby() {
             : error}
         </div>
       ) : visibleTournaments.length ? (
-        <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4 xl:grid-cols-3">
-          {visibleTournaments.map((tournament) => (
-            <TournamentCard key={tournament.id} tournament={tournament} />
-          ))}
-        </div>
+        showSections ? (
+          <div className="mt-2">
+            {sections.map((section) => (
+              <section key={section.group} className="mt-5">
+                <h3 className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-zinc-400">
+                  <span className={`h-2 w-2 rounded-full ${GROUP_DOT[section.group]}`} />
+                  {GROUP_LABEL[section.group]}
+                  <span className="text-zinc-600">{section.items.length}</span>
+                </h3>
+                <div className={GRID_CLASS}>
+                  {section.items.map((tournament) => (
+                    <TournamentCard key={tournament.id} tournament={tournament} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div className={`mt-4 ${GRID_CLASS}`}>
+            {visibleTournaments.map((tournament) => (
+              <TournamentCard key={tournament.id} tournament={tournament} />
+            ))}
+          </div>
+        )
       ) : (
         <div className="mt-5 rounded-xl border border-white/10 bg-[#0F1E2E]/60 px-5 py-12 text-center backdrop-blur-lg">
           <p className="text-base font-semibold text-zinc-200">

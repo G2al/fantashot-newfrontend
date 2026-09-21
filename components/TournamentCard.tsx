@@ -28,14 +28,24 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
   const primaryLeague = tournament.leagues[0] ?? null;
   const isMultiLeague = tournament.leagues.length > 1;
   const coverUrl = resolveApiAssetUrl(tournament.cover_image_url);
+  const isLive = tournament.status === "in-progress";
+  const isArchived = ["finished", "paid", "cancelled"].includes(tournament.status);
 
   return (
-    <article className="group overflow-hidden rounded-lg border border-white/10 bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 hover:-translate-y-0.5 hover:border-[#22E6C3]/30 hover:shadow-[0_18px_52px_rgba(34,230,195,0.12)] lg:flex lg:flex-col">
+    <article
+      className={`group overflow-hidden rounded-lg border bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 lg:flex lg:flex-col ${getCardToneClassName(
+        tournament.status,
+      )}`}
+    >
       <div className="relative hidden h-[132px] w-full shrink-0 items-center justify-center overflow-hidden border-b border-white/8 bg-[radial-gradient(circle_at_50%_40%,rgba(34,230,195,0.2),rgba(6,17,27,0.92)_72%)] lg:flex">
         {coverUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element -- host della copertina variabile per ambiente, evitiamo il whitelisting di next/image */}
-            <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <img
+              src={coverUrl}
+              alt=""
+              className={`absolute inset-0 h-full w-full object-cover ${isArchived ? "opacity-60 grayscale" : ""}`}
+            />
             <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/25 to-black/60" />
           </>
         ) : (
@@ -63,10 +73,11 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
         )}
 
         <span
-          className={`absolute left-2 top-2 hidden rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide shadow-lg lg:block ${getStatusBadgeClassName(
+          className={`absolute left-2 top-2 hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide shadow-lg lg:flex ${getStatusBadgeClassName(
             tournament.status,
           )}`}
         >
+          {isLive ? <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" /> : null}
           {STATUS_LABEL[tournament.status]}
         </span>
       </div>
@@ -91,10 +102,11 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             </h2>
           </div>
           <span
-            className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide shadow lg:hidden ${getStatusBadgeClassName(
+            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide shadow lg:hidden ${getStatusBadgeClassName(
               tournament.status,
             )}`}
           >
+            {isLive ? <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" /> : null}
             {STATUS_LABEL[tournament.status]}
           </span>
         </div>
@@ -115,25 +127,14 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
 
         <div className="mt-auto flex items-end justify-between gap-3 pt-3">
           <div className="min-w-0 text-[11px] text-zinc-500">
-            {countdown ? (
-              <p className="truncate">
-                Chiusura tra{" "}
-                <span className="font-mono font-semibold text-[#22E6C3]">
-                  {countdown}
-                </span>
-              </p>
-            ) : (
-              <p className="truncate">{getStatusHint(tournament.status)}</p>
-            )}
+            <CardFooterInfo tournament={tournament} countdown={countdown} />
           </div>
 
           <Link
             href={`/tournaments/${tournament.id}`}
-            className={`flex h-9 shrink-0 items-center justify-center rounded-md px-3 text-xs font-bold transition ${
-              tournament.is_user_registered
-                ? "border border-[#22E6C3] bg-[#123A3B] text-[#22E6C3] hover:bg-[#22E6C3]/20"
-                : "bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] text-[#06111B] shadow-[0_8px_24px_rgba(34,230,195,0.25)] hover:from-[#1ED8B7] hover:to-[#22E6C3]"
-            }`}
+            className={`flex h-9 shrink-0 items-center justify-center rounded-md px-3 text-xs font-bold transition ${getActionClassName(
+              tournament,
+            )}`}
           >
             {getActionLabel(tournament)}
           </Link>
@@ -199,15 +200,144 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function getActionLabel(tournament: Tournament) {
-  if (tournament.is_user_registered) {
-    return "Apri torneo";
-  }
-
   if (tournament.status === "enrollments") {
-    return "Iscriviti";
+    return tournament.is_user_registered ? "Apri torneo" : "Iscriviti";
   }
 
-  return "Dettagli";
+  if (tournament.status === "in-progress") return "Segui live";
+  if (tournament.status === "finished" || tournament.status === "paid") {
+    return "Vedi risultati";
+  }
+
+  return tournament.is_user_registered ? "Apri torneo" : "Dettagli";
+}
+
+/** Solo l'azione "Iscriviti" e' piena: e' l'unico CTA che porta un ricavo. */
+function getActionClassName(tournament: Tournament) {
+  if (tournament.status === "enrollments" && !tournament.is_user_registered) {
+    return "bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] text-[#06111B] shadow-[0_8px_24px_rgba(34,230,195,0.25)] hover:from-[#1ED8B7] hover:to-[#22E6C3]";
+  }
+
+  if (["finished", "paid", "cancelled"].includes(tournament.status)) {
+    return "border border-white/15 text-zinc-300 hover:bg-white/5";
+  }
+
+  return "border border-[#22E6C3] bg-[#123A3B] text-[#22E6C3] hover:bg-[#22E6C3]/20";
+}
+
+/** Bordo/alone per stato: aperti e live risaltano, i chiusi arretrano. */
+function getCardToneClassName(status: TournamentStatus) {
+  if (status === "enrollments") {
+    return "border-[#22E6C3]/30 hover:-translate-y-0.5 hover:border-[#22E6C3]/50 hover:shadow-[0_18px_52px_rgba(34,230,195,0.12)]";
+  }
+  if (status === "in-progress") {
+    return "border-[#22E6C3]/50 shadow-[0_0_28px_rgba(34,230,195,0.14)] hover:-translate-y-0.5";
+  }
+  if (status === "paid") {
+    return "border-amber-400/25 hover:border-amber-400/40";
+  }
+  return "border-white/10 hover:border-white/20";
+}
+
+function CardFooterInfo({
+  tournament,
+  countdown,
+}: {
+  tournament: Tournament;
+  countdown: string | null;
+}) {
+  if (countdown) {
+    return (
+      <p className="truncate">
+        Chiusura tra{" "}
+        <span className="font-mono font-semibold text-[#22E6C3]">{countdown}</span>
+      </p>
+    );
+  }
+
+  const isClosed = tournament.status === "finished" || tournament.status === "paid";
+
+  if (isClosed && tournament.winner) {
+    const winner = tournament.winner;
+    const name = winner.user.username || winner.user.name || winner.team_name;
+
+    return (
+      <p className="flex min-w-0 items-center gap-1.5">
+        <span className="shrink-0 text-amber-400">
+          <TrophyIcon />
+        </span>
+        <span className="truncate font-bold text-zinc-200">{name}</span>
+        <span className="shrink-0 font-mono font-semibold text-amber-300">
+          {winner.points.toLocaleString("it-IT", { maximumFractionDigits: 2 })} pt
+        </span>
+        {tournament.status === "paid" && winner.prize ? (
+          <span className="shrink-0 text-zinc-500">· {formatMoney(winner.prize)}</span>
+        ) : null}
+      </p>
+    );
+  }
+
+  if (tournament.status === "in-progress") {
+    const leader = tournament.leader;
+    const leaderName = leader
+      ? leader.user.username || leader.user.name || leader.team_name
+      : null;
+    const total = tournament.fixtures_count ?? 0;
+    const finished = tournament.fixtures_finished_count ?? 0;
+    const progress = total > 0 ? Math.round((finished / total) * 100) : 0;
+
+    if (leader || total > 0) {
+      return (
+        <div className="min-w-0 space-y-1.5">
+          {leader ? (
+            <p className="flex min-w-0 items-center gap-1.5">
+              <span className="shrink-0 text-[#22E6C3]">
+                <TrophyIcon />
+              </span>
+              <span className="shrink-0 text-zinc-500">In testa</span>
+              <span className="truncate font-bold text-zinc-200">{leaderName}</span>
+              <span className="shrink-0 font-mono font-semibold text-[#22E6C3]">
+                {leader.points.toLocaleString("it-IT", { maximumFractionDigits: 2 })} pt
+              </span>
+            </p>
+          ) : null}
+          {total > 0 ? (
+            <div className="w-32">
+              <p className="mb-1 truncate">
+                {finished} su {total} partite
+              </p>
+              <div className="h-1 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-[#22E6C3]"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+  }
+
+  return <p className="truncate">{getStatusHint(tournament.status)}</p>;
+}
+
+function TrophyIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-3.5 w-3.5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+      <path d="M17 5h2a2 2 0 0 1 2 2 3 3 0 0 1-3 3h-1M7 5H5a2 2 0 0 0-2 2 3 3 0 0 0 3 3h1" />
+    </svg>
+  );
 }
 
 function getStatusHint(status: TournamentStatus) {
@@ -230,6 +360,12 @@ function getStatusBadgeClassName(status: TournamentStatus) {
   }
   if (status === "cancelled") {
     return "bg-zinc-700 text-zinc-300 line-through decoration-zinc-500";
+  }
+  if (status === "paid") {
+    return "border border-amber-400 bg-amber-400/15 text-amber-300";
+  }
+  if (status === "finished") {
+    return "border border-white/25 bg-black/40 text-zinc-300";
   }
   return "bg-zinc-700 text-zinc-100";
 }

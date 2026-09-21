@@ -4,6 +4,10 @@ import Link from "next/link";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { LeagueLogo } from "@/components/lobby/shared";
 import { EventsPanel } from "@/components/tournament/EventsPanel";
+import {
+  RankingPodium,
+  getRankingOwner,
+} from "@/components/tournament/RankingPodium";
 import { RegolamentoContent } from "@/components/tournament/RegolamentoContent";
 import { TeamBuilder } from "@/components/tournament/TeamBuilder";
 import {
@@ -377,21 +381,6 @@ function TournamentDetailTabs({
   );
 }
 
-/**
- * Il backend chiama la squadra "Nome Cognome's Team": non serve mostrarlo.
- * Riga principale = nickname, secondaria = nome e cognome.
- */
-function getRankingOwner(entry: TournamentRankingEntry) {
-  const teamOwnerName = entry.name.replace(/['’]s Team$/i, "").trim();
-  const fullName = entry.user.name?.trim() || teamOwnerName;
-  const nickname = entry.user.username?.trim() || fullName;
-
-  return {
-    nickname,
-    fullName: fullName && fullName !== nickname ? fullName : null,
-  };
-}
-
 function ClassificaPanel({
   tournament,
   entries,
@@ -436,10 +425,23 @@ function ClassificaPanel({
   const previewEntry = entries.find((entry) => entry.id === previewTeamId);
   const previewOwner = previewEntry ? getRankingOwner(previewEntry) : null;
 
+  // Podio solo a torneo chiuso: durante il live la classifica e' provvisoria.
+  const showPodium =
+    ["finished", "paid"].includes(tournament.status) && entries.length > 0;
+  const listOffset = showPodium ? Math.min(3, entries.length) : 0;
+  const listEntries = entries.slice(listOffset);
+
   return (
     <div className="space-y-2">
-      {entries.map((entry, index) => {
-        const position = index + 1;
+      {showPodium ? (
+        <RankingPodium
+          entries={entries.slice(0, 3)}
+          ownTeamId={ownTeamId}
+          onSelect={setPreviewTeamId}
+        />
+      ) : null}
+      {listEntries.map((entry, index) => {
+        const position = listOffset + index + 1;
         const isOwn = entry.id === ownTeamId;
         const owner = getRankingOwner(entry);
 

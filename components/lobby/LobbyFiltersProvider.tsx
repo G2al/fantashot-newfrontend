@@ -297,7 +297,25 @@ function matchesPriceFilter(tournament: Tournament, filter: PriceFilter) {
   return amount >= 3000;
 }
 
+export type TournamentGroup = "open" | "live" | "closed";
+
+export const TOURNAMENT_GROUP_ORDER: TournamentGroup[] = ["open", "live", "closed"];
+
+export function getTournamentGroup(tournament: Tournament): TournamentGroup {
+  if (tournament.status === "in-progress") return "live";
+  if (["finished", "paid", "cancelled"].includes(tournament.status)) return "closed";
+  return "open";
+}
+
+/** Prima gli aperti, poi i live, poi i conclusi; dentro ogni gruppo vale l'ordinamento scelto. */
 function sortTournaments(tournaments: Tournament[], sort: SortFilter) {
+  const rank = (tournament: Tournament) =>
+    TOURNAMENT_GROUP_ORDER.indexOf(getTournamentGroup(tournament));
+
+  return sortByChoice(tournaments, sort).sort((a, b) => rank(a) - rank(b));
+}
+
+function sortByChoice(tournaments: Tournament[], sort: SortFilter) {
   const sorted = [...tournaments];
 
   if (sort === "prize") {
