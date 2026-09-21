@@ -331,16 +331,16 @@ export function TeamBuilder({
   }
 
   return (
-    <div className={`relative isolate overflow-hidden rounded-xl border border-[#1E3448] bg-[linear-gradient(145deg,#0F1E2E_0%,#0A1420_58%,#06111B_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)] sm:border-[#22E6C3]/30 ${isReadOnly ? "" : "pb-24 sm:pb-0"}`}>
+    <div className={`relative overflow-hidden rounded-xl border border-[#1E3448] bg-[linear-gradient(145deg,#0F1E2E_0%,#0A1420_58%,#06111B_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)] sm:border-[#22E6C3]/30 ${isReadOnly ? "" : "pb-24 sm:pb-0"}`}>
       {/* Sfondo dell'intero blocco (header -> panchina), sempre dietro a tutto. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/images/tournament-pitch-bg.png"
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-80 [mask-image:linear-gradient(to_bottom,transparent_0%,black_22%,black_62%,transparent_100%)]"
+        className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover opacity-80 [mask-image:linear-gradient(to_bottom,transparent_0%,black_22%,black_62%,transparent_100%)]"
       />
-      <div className="hidden flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:flex sm:px-6">
+      <div className="relative z-[1] hidden flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:flex sm:px-6">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#22E6C3]/12 text-[#22E6C3]">
             <FormationIcon />
@@ -394,7 +394,7 @@ export function TeamBuilder({
         </div>
       </div>
 
-      <div className={`h-11 items-center justify-between gap-3 border-b border-[#1E3448] bg-[#0A1420] px-3 sm:hidden ${isReadOnly && !enrollmentCountdown ? "hidden" : "flex"}`}>
+      <div className={`relative z-[1] h-11 items-center justify-between gap-3 border-b border-[#1E3448] bg-[#0A1420] px-3 sm:hidden ${isReadOnly && !enrollmentCountdown ? "hidden" : "flex"}`}>
         <div className="flex min-w-0 items-center gap-2">
           <span className={`h-2 w-2 shrink-0 rounded-full ${enrollmentCountdown ? "bg-[#22E6C3] animate-pulse" : "bg-zinc-500"}`} />
           <span className="text-[10px] font-black uppercase tracking-wide text-zinc-400">
@@ -420,7 +420,7 @@ export function TeamBuilder({
         )}
       </div>
 
-      <div className={isReadOnly ? "" : "grid xl:grid-cols-[minmax(0,1fr)_310px]"}>
+      <div className={`relative z-[1] ${isReadOnly ? "" : "grid xl:grid-cols-[minmax(0,1fr)_310px]"}`}>
         <div className="min-w-0 xl:border-r xl:border-[#22E6C3]/20">
           <div className={`relative mx-auto aspect-[5/8] w-full max-w-[1120px] sm:aspect-[4/3] xl:-mt-12`}>
             <PitchBackground />

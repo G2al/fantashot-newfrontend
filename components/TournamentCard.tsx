@@ -76,14 +76,17 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           />
         )}
 
+        <div className="absolute left-2 top-2 hidden items-center gap-1.5 lg:flex">
         <span
-          className={`absolute left-2 top-2 hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide shadow-lg lg:flex ${getStatusBadgeClassName(
+          className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide shadow-lg ${getStatusBadgeClassName(
             tournament.status,
           )}`}
         >
           {isLive ? <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" /> : null}
           {STATUS_LABEL[tournament.status]}
         </span>
+          {tournament.is_user_registered ? <RegisteredPill className="inline-flex py-1 shadow-lg" /> : null}
+        </div>
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col p-3.5 lg:p-4">
@@ -104,16 +107,18 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             <h2 className="mt-1 line-clamp-2 text-base font-bold leading-tight text-white lg:text-xl">
               {tournament.title}
             </h2>
-            {tournament.is_user_registered ? <RegisteredPill className="mt-1.5 hidden lg:inline-flex" /> : null}
           </div>
+          <div className="flex shrink-0 flex-col items-end gap-1 lg:hidden">
           <span
-            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide shadow lg:hidden ${getStatusBadgeClassName(
+            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide shadow ${getStatusBadgeClassName(
               tournament.status,
             )}`}
           >
             {isLive ? <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" /> : null}
             {STATUS_LABEL[tournament.status]}
           </span>
+            {tournament.is_user_registered ? <RegisteredPill /> : null}
+          </div>
         </div>
 
         <MobileLeagueSummary leagues={tournament.leagues} />
@@ -134,7 +139,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           />
         </div>
         {tournament.status === "enrollments" && tournament.max_participants > 0 ? (
-          <div className="mt-2 hidden h-1 overflow-hidden rounded-full bg-white/10 lg:block" title="Posti occupati">
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10" title="Posti occupati">
             <div
               className="h-full rounded-full bg-[#22E6C3]"
               style={{
