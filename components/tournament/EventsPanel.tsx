@@ -134,7 +134,7 @@ export function EventsPanel({
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-4 sm:space-y-2">
             {day.items.map((view) => (
               <FixtureRow key={view.fixture.id} view={view} />
             ))}
@@ -170,15 +170,22 @@ function FixtureRow({ view }: { view: FixtureView }) {
   const time = date ? timeFormatter.format(date) : "--:--";
 
   return (
-    <div className="rounded-xl border border-[#1E3448] bg-[#0F1E2E]/70 transition hover:border-white/20">
+    <div className="relative rounded-xl border border-[#1E3448] bg-[#0F1E2E]/70 transition hover:border-white/20">
       {/* Mobile: due righe squadra + colonna punteggio, ~64px per partita. */}
-      <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 sm:hidden">
-        <div className="flex flex-col items-center gap-1 text-center">
+      <div className="px-3 pb-3 pt-4 sm:hidden">
+        <span className="absolute -top-2.5 left-3 flex max-w-[70%] items-center gap-1.5 rounded-full border border-[#1E3448] bg-[#0F1E2E] py-0.5 pl-1 pr-2.5 sm:hidden">
+          {fixture.league.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={fixture.league.logo} alt="" className="h-4 w-4 shrink-0 object-contain" />
+          ) : null}
+          <span className="truncate text-[9px] font-black uppercase tracking-wide text-zinc-300">
+            {fixture.league.name}
+          </span>
+        </span>
+        <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-3">
+        <div className="flex flex-col items-center gap-1.5 text-center">
           <span className="text-sm font-black text-white">{time}</span>
           <StatusPill hasScore={hasScore} isFinal={isFinal} compact />
-          <span className="h-4 w-4">
-            <LeagueLogo logoUrl={fixture.league.logo} label={fixture.league.name} />
-          </span>
         </div>
 
         <div className="min-w-0 space-y-2">
@@ -207,6 +214,7 @@ function FixtureRow({ view }: { view: FixtureView }) {
             lost={homeWon}
             live={hasScore && !isFinal}
           />
+        </div>
         </div>
       </div>
 
