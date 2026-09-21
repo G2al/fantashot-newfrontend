@@ -8,7 +8,7 @@ import { formatMoney, formatPrizePool } from "@/lib/format";
 import { LeagueLogo } from "@/components/lobby/shared";
 import type { Tournament, TournamentStatus } from "@/types/tournament";
 
-const STATUS_LABEL: Record<TournamentStatus, string> = {
+export const STATUS_LABEL: Record<TournamentStatus, string> = {
   draft: "Bozza",
   ready: "Pronto",
   enrollments: "Iscrizioni aperte",
@@ -151,6 +151,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
 
         <div className="mt-auto flex items-end justify-between gap-3 pt-3">
           <div className="min-w-0 text-[11px] text-zinc-500">
+            <UserResultLine tournament={tournament} />
             <CardFooterInfo tournament={tournament} countdown={countdown} />
           </div>
 
@@ -207,6 +208,7 @@ function CompactTournamentRow({
         value={`${tournament.enrolled_users_count}/${tournament.max_participants}`}
       />
       <div className="min-w-0 text-[11px] text-zinc-500">
+        <UserResultLine tournament={tournament} />
         <CardFooterInfo tournament={tournament} countdown={countdown} />
       </div>
       <Link
@@ -218,6 +220,32 @@ function CompactTournamentRow({
         {getActionLabel(tournament)}
       </Link>
     </article>
+  );
+}
+
+/** "Tu: 3° su 10 · 47,8 pt · premio 5 €" per i tornei a cui partecipi. */
+function UserResultLine({ tournament }: { tournament: Tournament }) {
+  const result = getUserResult(tournament);
+
+  if (!result) return null;
+
+  return (
+    <p className="mb-1 flex min-w-0 items-center gap-1.5 text-xs">
+      <span className="shrink-0 rounded-full border border-[#1D6D68] bg-[#123A3B] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#3AF5D4]">
+        Tu
+      </span>
+      <span className="truncate font-black text-white">
+        {result.position}° su {tournament.enrolled_users_count}
+      </span>
+      {result.points !== null ? (
+        <span className="shrink-0 font-mono font-semibold text-[#3AF5D4]">
+          {result.points.toLocaleString("it-IT", { maximumFractionDigits: 2 })} pt
+        </span>
+      ) : null}
+      {result.prize ? (
+        <span className="shrink-0 font-bold text-amber-300">· {formatMoney(result.prize)}</span>
+      ) : null}
+    </p>
   );
 }
 
@@ -442,7 +470,20 @@ function getStatusHint(status: TournamentStatus) {
   return "Informazioni torneo";
 }
 
-function getStatusBadgeClassName(status: TournamentStatus) {
+/** Piazzamento dell'utente nel torneo, se il backend lo espone (iscritto + torneo avviato). */
+export function getUserResult(tournament: Tournament) {
+  if (!tournament.is_user_registered || typeof tournament.user_position !== "number") {
+    return null;
+  }
+
+  return {
+    position: tournament.user_position,
+    points: tournament.user_points ?? null,
+    prize: tournament.user_prize ?? null,
+  };
+}
+
+export function getStatusBadgeClassName(status: TournamentStatus) {
   if (status === "enrollments") {
     return "border border-[#22E6C3] bg-[#123A3B] text-[#22E6C3]";
   }

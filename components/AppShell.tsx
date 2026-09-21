@@ -143,15 +143,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <div
-            className="flex h-10 items-center gap-1.5 rounded-full border border-white/10 bg-[#0F1E2E] px-2 text-[11px] font-bold text-white sm:gap-2 sm:px-3 sm:text-sm"
-            aria-label={`Saldo wallet: ${formatWalletTotal(user?.wallets)}`}
+          <Link
+            href="/profile"
+            className="flex h-10 items-center gap-1.5 rounded-full border border-white/10 bg-[#0F1E2E] px-2 text-[11px] font-bold text-white transition hover:border-[#22E6C3]/40 sm:gap-2 sm:px-3 sm:text-sm"
+            aria-label={`Saldo wallet: ${formatWalletTotal(user?.wallets)}. Apri il profilo`}
           >
             <span className="text-[#22E6C3]">
               <WalletIcon />
             </span>
             <span className="whitespace-nowrap">{formatWalletTotal(user?.wallets)}</span>
-          </div>
+          </Link>
 
           <div ref={profileMenuRef} className="relative">
             <button
@@ -175,6 +176,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </p>
                   <p className="truncate text-xs text-zinc-500">{user?.email}</p>
                 </div>
+                <Link
+                  href="/profile"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                  className="mt-1 block w-full rounded-md px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-[#22E6C3]/10"
+                >
+                  Il mio profilo
+                </Link>
                 <button
                   type="button"
                   onClick={() => void handleLogout()}

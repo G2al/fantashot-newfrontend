@@ -59,6 +59,11 @@ export type Tournament = {
   leader?: TournamentStanding | null;
   fixtures_count?: number;
   fixtures_finished_count?: number;
+  /** Solo se l'utente e' iscritto. Null finche' il torneo non e' in corso/finito/pagato. */
+  user_position?: number | null;
+  user_points?: number | null;
+  /** Solo torneo "paid" e solo se il premio e' stato davvero pagato. */
+  user_prize?: Money | null;
 };
 
 export type TournamentStanding = {
