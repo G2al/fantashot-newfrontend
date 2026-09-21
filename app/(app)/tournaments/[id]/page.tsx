@@ -676,7 +676,7 @@ function groupFixturesByLeague(fixtures: TournamentFixture[]) {
 
 function FixtureRow({ fixture }: { fixture: TournamentFixture }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 transition hover:border-[#22E6C3]/30 hover:bg-[#123A3B]/15 sm:min-h-[78px] sm:px-4">
+    <div className="rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 transition hover:border-white/20 sm:px-5">
       {/* Mobile: nomi squadra centrati e per intero, niente logo campionato ripetuto (gia' nell'intestazione del gruppo sopra). */}
       <div className="sm:hidden">
         <div className="flex items-center justify-end gap-2">
@@ -708,28 +708,99 @@ function FixtureRow({ fixture }: { fixture: TournamentFixture }) {
         </div>
       </div>
 
-      {/* Desktop: layout originale invariato. */}
-      <div className="hidden items-center justify-between gap-3 sm:flex">
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <LeagueLogo logoUrl={fixture.league.logo} label={fixture.league.name} />
-          <div className="min-w-0 flex-1">
-            <p className="mb-1 truncate text-[10px] font-medium text-zinc-400">
-              {fixture.league.name}
-            </p>
-            <div className="flex min-w-0 items-center gap-2.5">
-              <TeamBadge name={fixture.home_team.name} logo={fixture.home_team.logo} />
-              <FixtureScore fixture={fixture} />
-              <TeamBadge name={fixture.away_team.name} logo={fixture.away_team.logo} />
-            </div>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-3 border-l border-white/10 pl-3">
-          <span className="text-zinc-500"><CalendarIcon /></span>
-          <FixtureDate value={fixture.start_date} />
-          <span className="text-xl leading-none text-zinc-500">›</span>
-        </div>
+      <DesktopFixture fixture={fixture} />
+    </div>
+  );
+}
+
+const FINAL_STATES = ["FT", "AET", "FT_PEN"];
+
+/** Desktop: casa a sinistra, punteggio grande al centro, ospite a destra. Vincitore in evidenza, perdente attenuato. */
+function DesktopFixture({ fixture }: { fixture: TournamentFixture }) {
+  const { home_team_score: home, away_team_score: away, state } = fixture;
+  const hasScore = home !== null && away !== null;
+  const isFinal = FINAL_STATES.includes(state);
+  const homeWon = hasScore && isFinal && home > away;
+  const awayWon = hasScore && isFinal && away > home;
+
+  return (
+    <div className="hidden min-h-[88px] grid-cols-[110px_minmax(0,1fr)_auto_minmax(0,1fr)_110px] items-center gap-5 sm:grid">
+      <FixtureDate value={fixture.start_date} />
+
+      <div className="flex min-w-0 items-center justify-end gap-3">
+        <span
+          className={`min-w-0 text-right text-base font-black leading-tight ${
+            awayWon ? "text-zinc-500" : "text-white"
+          }`}
+        >
+          {fixture.home_team.name}
+        </span>
+        <FixtureCrest logo={fixture.home_team.logo} dimmed={awayWon} />
+      </div>
+
+      <div className="flex min-w-[96px] justify-center">
+        {hasScore ? (
+          <span
+            className={`flex items-center gap-2 rounded-xl border px-4 py-1.5 font-black tabular-nums ${
+              isFinal
+                ? "border-white/10 bg-black/30"
+                : "border-[#22E6C3]/50 bg-[#123A3B]"
+            }`}
+          >
+            <span className={`text-3xl ${awayWon ? "text-zinc-500" : isFinal ? "text-white" : "text-[#22E6C3]"}`}>
+              {home}
+            </span>
+            <span className="text-xl text-zinc-600">-</span>
+            <span className={`text-3xl ${homeWon ? "text-zinc-500" : isFinal ? "text-white" : "text-[#22E6C3]"}`}>
+              {away}
+            </span>
+          </span>
+        ) : (
+          <span className="text-sm font-black uppercase tracking-wide text-zinc-600">vs</span>
+        )}
+      </div>
+
+      <div className="flex min-w-0 items-center gap-3">
+        <FixtureCrest logo={fixture.away_team.logo} dimmed={homeWon} />
+        <span
+          className={`min-w-0 text-base font-black leading-tight ${
+            homeWon ? "text-zinc-500" : "text-white"
+          }`}
+        >
+          {fixture.away_team.name}
+        </span>
+      </div>
+
+      <div className="flex justify-end">
+        <span
+          className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wide ${
+            !hasScore
+              ? "border-[#1E3448] text-zinc-500"
+              : isFinal
+                ? "border-white/15 text-zinc-300"
+                : "border-[#22E6C3] bg-[#123A3B] text-[#22E6C3]"
+          }`}
+        >
+          {hasScore && !isFinal ? (
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+          ) : null}
+          {!hasScore ? "In programma" : isFinal ? "Finale" : "Live"}
+        </span>
       </div>
     </div>
+  );
+}
+
+function FixtureCrest({ logo, dimmed }: { logo: string; dimmed: boolean }) {
+  return (
+    <span
+      className={`h-11 w-11 shrink-0 rounded-full bg-white/5 p-2 ${dimmed ? "opacity-50" : ""}`}
+    >
+      {logo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logo} alt="" className="h-full w-full object-contain" />
+      ) : null}
+    </span>
   );
 }
 
@@ -804,30 +875,6 @@ function FixtureDate({ value }: { value: string }) {
         }).format(date)}
       </p>
     </div>
-  );
-}
-
-function TeamBadge({
-  name,
-  logo,
-  align = "left",
-}: {
-  name: string;
-  logo: string;
-  align?: "left" | "right";
-}) {
-  return (
-    <span
-      className={`flex min-w-0 items-center gap-2 ${align === "right" ? "flex-row-reverse text-right" : ""}`}
-    >
-      <span className="relative h-8 w-8 shrink-0 rounded-full bg-white/5 p-1">
-        {logo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt="" className="h-full w-full object-contain" />
-        ) : null}
-      </span>
-      <span className="max-w-24 truncate text-xs font-bold text-zinc-100 sm:max-w-28 sm:text-sm">{name}</span>
-    </span>
   );
 }
 

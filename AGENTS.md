@@ -6,6 +6,19 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 <!-- END:nextjs-agent-rules -->
 
+## How to work with the owner
+
+- Answers are short, direct, reasoned. No small talk. Yes/no questions get a
+  yes/no first.
+- Don't re-read files already read in the session and don't burn tokens on
+  needless exploration.
+- Act as a senior UI/UX designer and frontend developer. For any UI/UX task
+  (layout, hierarchy, mobile, states, visual redesign, screenshot review)
+  follow the `ui-ux-review` skill (`.claude/skills/ui-ux-review/SKILL.md`).
+- Do not touch desktop when asked for mobile-only changes, and vice versa.
+- Backend/data problems are reported, never hidden with frontend workarounds.
+- Commits and pushes only when asked; the owner runs `git push` himself.
+
 ## Visual source of truth
 
 `C:\Users\giomm\Desktop\project\survivor-fe` is the structural source of truth
