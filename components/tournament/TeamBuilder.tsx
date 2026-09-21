@@ -332,7 +332,7 @@ export function TeamBuilder({
         </div>
       </div>
 
-      <div className="flex h-11 items-center justify-between gap-3 border-b border-[#1E3448] bg-[#0A1420] px-3 sm:hidden">
+      <div className={`h-11 items-center justify-between gap-3 border-b border-[#1E3448] bg-[#0A1420] px-3 sm:hidden ${isReadOnly && !enrollmentCountdown ? "hidden" : "flex"}`}>
         <div className="flex min-w-0 items-center gap-2">
           <span className={`h-2 w-2 shrink-0 rounded-full ${enrollmentCountdown ? "bg-[#22E6C3] animate-pulse" : "bg-zinc-500"}`} />
           <span className="text-[10px] font-black uppercase tracking-wide text-zinc-400">
@@ -414,7 +414,7 @@ export function TeamBuilder({
                 <span className="text-[#22E6C3]"><BenchIcon /></span>
                 Panchina
               </p>
-              <p className="text-[10px] text-zinc-500">{BENCH_SLOT_KEYS.length} slot per le riserve</p>
+              <p className="text-[10px] text-zinc-500">{BENCH_SLOT_KEYS.length} slot per le riserve<span className="sm:hidden"> · scorri →</span></p>
             </div>
             <div className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 pb-1 pt-3 sm:justify-center sm:gap-1 sm:snap-none">
               {BENCH_SLOT_KEYS.map((slotKey) => {

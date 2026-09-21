@@ -220,11 +220,11 @@ export default function TournamentDetailPage({
                   {tournament.description}
                 </p>
                 {tournament.leagues.length ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="scrollbar-hide -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
                     {tournament.leagues.map((league) => (
                       <div
                         key={league.id}
-                        className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-1"
+                        className="flex shrink-0 items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-1"
                       >
                         <LeagueLogo logoUrl={league.logo} label={league.name} />
                         <span className="text-xs font-bold text-zinc-100">
@@ -238,10 +238,7 @@ export default function TournamentDetailPage({
 
               <div className="grid grid-cols-3 gap-2 sm:mt-8 sm:gap-0 sm:divide-x sm:divide-white/10 sm:rounded-xl sm:border sm:border-white/10 sm:bg-[#06111B]/85 sm:py-2 sm:backdrop-blur lg:mt-0 lg:justify-self-end lg:w-full lg:max-w-[600px]">
                 <StatTile icon={<TrophyIcon />} label="Montepremi" value={formatPrizePool(tournament.prize_pool)} />
-                <div className="min-w-0 sm:hidden">
-                  <StatTile icon={<CoinIcon />} label="Quota" value={formatMoney(tournament.buy_in)} />
-                </div>
-                <div className="hidden min-w-0 sm:block">
+                <div className="min-w-0">
                   {tournament.winner && ["finished", "paid"].includes(tournament.status) ? (
                     <StatTile
                       icon={<TrophyIcon />}
@@ -322,16 +319,29 @@ export default function TournamentDetailPage({
                     }}
                   />
                 ) : showOwnTeamView && tournament.user_fanta_team ? (
-                  <TeamBuilder
-                    tournament={tournament}
-                    mode="view"
-                    viewTeam={{
-                      module_id: tournament.user_fanta_team.module_id,
-                      formation_data: tournament.user_fanta_team.formation_data,
-                    }}
-                    onPlayerInspect={handleOwnPlayerInspect}
-                    onCancel={() => undefined}
-                  />
+                  <>
+                    {tournament.status !== "enrollments" ? (
+                      <OwnResultStrip
+                        position={
+                          ranking
+                            ? ranking.findIndex((entry) => entry.id === tournament.user_fanta_team?.id) + 1
+                            : 0
+                        }
+                        total={ranking?.length ?? tournament.enrolled_users_count}
+                        points={tournament.user_fanta_team.points}
+                      />
+                    ) : null}
+                    <TeamBuilder
+                      tournament={tournament}
+                      mode="view"
+                      viewTeam={{
+                        module_id: tournament.user_fanta_team.module_id,
+                        formation_data: tournament.user_fanta_team.formation_data,
+                      }}
+                      onPlayerInspect={handleOwnPlayerInspect}
+                      onCancel={() => undefined}
+                    />
+                  </>
                 ) : (
                   <EnrollmentPanel
                     tournament={tournament}
@@ -664,6 +674,36 @@ function EnrollmentPanel({
       >
         Crea la formazione · Quota {formatMoney(tournament.buy_in)}
       </button>
+    </div>
+  );
+}
+
+/** Solo mobile: posizione e punti dell'utente, altrimenti da telefono non si vedono. */
+function OwnResultStrip({
+  position,
+  total,
+  points,
+}: {
+  position: number;
+  total: number;
+  points: number;
+}) {
+  return (
+    <div className="grid grid-cols-2 divide-x divide-white/10 border-b border-[#1E3448] bg-[#0A1420] sm:hidden">
+      <div className="px-4 py-3">
+        <p className="text-[10px] font-medium text-zinc-400">La tua posizione</p>
+        <p className="text-lg font-black text-white">
+          {position > 0 ? `${position}°` : "—"}
+          <span className="ml-1 text-xs font-bold text-zinc-500">su {total}</span>
+        </p>
+      </div>
+      <div className="px-4 py-3">
+        <p className="text-[10px] font-medium text-zinc-400">Totale punti</p>
+        <p className="text-lg font-black text-[#3AF5D4]">
+          {points.toLocaleString("it-IT", { maximumFractionDigits: 2 })}
+          <span className="ml-1 text-xs font-bold text-zinc-500">pt</span>
+        </p>
+      </div>
     </div>
   );
 }
