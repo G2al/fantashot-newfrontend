@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useCountdown } from "@/hooks/use-countdown";
 import { getWalletBalanceMinor } from "@/lib/wallet";
+import { getCountdownTarget, isFullForVisitor } from "@/lib/tournament-enrollment";
 import { getTournament, getTournamentRanking } from "@/lib/api/tournaments";
 import { getMe } from "@/lib/auth-api";
 import { formatMoney, formatPrizePool } from "@/lib/format";
@@ -255,8 +256,11 @@ export default function TournamentDetailPage({
               </div>
 
               <div className="flex flex-col gap-3 sm:mt-8 lg:mt-12 lg:w-full lg:max-w-[600px] lg:justify-self-end">
-              {tournament.status === "enrollments" ? (
-                <EnrollmentCountdownHero endDate={tournament.enrollments_end_date} />
+              {tournament.status === "enrollments" && getCountdownTarget(tournament).target ? (
+                <EnrollmentCountdownHero
+                  endDate={getCountdownTarget(tournament).target as string}
+                  isStart={isFullForVisitor(tournament)}
+                />
               ) : null}
               <div className="grid grid-cols-3 gap-2 sm:gap-0 sm:divide-x sm:divide-white/10 sm:rounded-xl sm:border sm:border-white/10 sm:bg-[#06111B]/85 sm:py-2 sm:backdrop-blur">
                 <StatTile icon={<TrophyIcon />} label="Montepremi" value={formatPrizePool(tournament.prize_pool)} />
@@ -619,6 +623,8 @@ function EnrollmentPanel({
   const balance = getWalletBalanceMinor(user?.wallets);
   const hasInsufficientBalance =
     balance !== null && balance < tournament.buy_in.amount;
+  const isFull = isFullForVisitor(tournament);
+  const startsCountdown = useCountdown(isFull ? tournament.starts_at : null);
 
   if (!isAuthenticated) {
     return (
@@ -688,16 +694,25 @@ function EnrollmentPanel({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <p className="text-xs font-black uppercase tracking-wide text-[#3AF5D4]">
-          Consegna la squadra entro
-        </p>
-        <p className="mt-1 font-mono text-3xl font-black text-white">
-          {countdown ?? "--:--:--"}
-        </p>
-      </div>
+      {isFull && !startsCountdown ? null : (
+        <div>
+          <p className="text-xs font-black uppercase tracking-wide text-[#3AF5D4]">
+            {isFull ? "Il torneo inizia tra" : "Consegna la squadra entro"}
+          </p>
+          <p className="animate-countdown-beat mt-1 origin-left font-mono text-3xl font-black text-white">
+            {(isFull ? startsCountdown : countdown) ?? "--:--:--"}
+          </p>
+        </div>
+      )}
 
-      {hasInsufficientBalance && balance !== null ? (
+      {isFull ? (
+        <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm">
+          <p className="font-black text-amber-300">Torneo al completo</p>
+          <p className="mt-0.5 text-xs text-zinc-300">
+            {tournament.enrolled_users_count}/{tournament.max_participants} posti occupati: non è più possibile iscriversi.
+          </p>
+        </div>
+      ) : hasInsufficientBalance && balance !== null ? (
         <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm">
           <p className="font-black text-amber-300">Saldo insufficiente</p>
           <p className="mt-0.5 text-xs text-zinc-300">
@@ -766,7 +781,7 @@ function StatusBadge({ status }: { status: TournamentDetail["status"] }) {
 }
 
 /** Solo desktop: il countdown e' l'informazione piu' urgente, quindi domina l'hero e pulsa. */
-function EnrollmentCountdownHero({ endDate }: { endDate: string }) {
+function EnrollmentCountdownHero({ endDate, isStart = false }: { endDate: string; isStart?: boolean }) {
   const countdown = useCountdown(endDate);
 
   if (!countdown) return null;
@@ -779,9 +794,11 @@ function EnrollmentCountdownHero({ endDate }: { endDate: string }) {
         </span>
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-400">
-            Le iscrizioni chiudono tra
+            {isStart ? "Il torneo inizia tra" : "Le iscrizioni chiudono tra"}
           </p>
-          <p className="text-[11px] text-zinc-500">Consegna la formazione in tempo</p>
+          <p className="text-[11px] text-zinc-500">
+            {isStart ? "Torneo al completo: iscrizioni chiuse" : "Consegna la formazione in tempo"}
+          </p>
         </div>
       </div>
       <p className="animate-countdown-beat origin-right font-mono text-4xl font-black tabular-nums leading-none text-[#3AF5D4]">

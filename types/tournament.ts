@@ -59,6 +59,10 @@ export type Tournament = {
   leader?: TournamentStanding | null;
   fixtures_count?: number;
   fixtures_finished_count?: number;
+  /** Kick-off della prima partita (UTC), null se il torneo non ha partite. */
+  starts_at?: string | null;
+  /** True solo se iscrizioni aperte, scadenza non passata, torneo non pieno e utente non iscritto. */
+  can_enroll?: boolean;
   /** Solo se l'utente e' iscritto. Null finche' il torneo non e' in corso/finito/pagato. */
   user_position?: number | null;
   user_points?: number | null;

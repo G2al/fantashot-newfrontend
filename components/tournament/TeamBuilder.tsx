@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { CenterAlert } from "@/components/CenterAlert";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { getWalletBalanceMinor } from "@/lib/wallet";
+import { isTournamentFull } from "@/lib/tournament-enrollment";
 import { useAuth } from "@/hooks/use-auth";
 import { useCountdown } from "@/hooks/use-countdown";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -292,6 +293,11 @@ export function TeamBuilder({
           ? "Completa tutti gli slot (titolari e panchina) prima di salvare."
           : "Scegli esattamente un capitano prima di salvare."
       );
+      return false;
+    }
+
+    if (mode === "create" && isTournamentFull(tournament)) {
+      setError("Il torneo è al completo: non è più possibile iscriversi.");
       return false;
     }
 

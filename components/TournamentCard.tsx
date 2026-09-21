@@ -6,6 +6,7 @@ import { useCountdown } from "@/hooks/use-countdown";
 import { resolveApiAssetUrl } from "@/lib/api";
 import { formatMoney, formatPrizePool } from "@/lib/format";
 import { LeagueLogo } from "@/components/lobby/shared";
+import { getCountdownTarget, isFullForVisitor, isTournamentFull } from "@/lib/tournament-enrollment";
 import type { Tournament, TournamentStatus } from "@/types/tournament";
 
 export const STATUS_LABEL: Record<TournamentStatus, string> = {
@@ -20,11 +21,9 @@ export const STATUS_LABEL: Record<TournamentStatus, string> = {
 };
 
 export function TournamentCard({ tournament }: { tournament: Tournament }) {
-  const countdown = useCountdown(
-    tournament.status === "enrollments"
-      ? tournament.enrollments_end_date
-      : null,
-  );
+  const countdownTarget = getCountdownTarget(tournament);
+  const countdown = useCountdown(countdownTarget.target);
+  const isFull = tournament.status === "enrollments" && isTournamentFull(tournament);
   const primaryLeague = tournament.leagues[0] ?? null;
   const isMultiLeague = tournament.leagues.length > 1;
   const coverUrl = resolveApiAssetUrl(tournament.cover_image_url);
@@ -85,6 +84,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           {isLive ? <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" /> : null}
           {STATUS_LABEL[tournament.status]}
         </span>
+          {isFull ? <FullPill className="py-1 shadow-lg" /> : null}
           {tournament.is_user_registered ? <RegisteredPill className="inline-flex py-1 shadow-lg" /> : null}
         </div>
       </div>
@@ -117,6 +117,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             {isLive ? <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" /> : null}
             {STATUS_LABEL[tournament.status]}
           </span>
+            {isFull ? <FullPill /> : null}
             {tournament.is_user_registered ? <RegisteredPill /> : null}
           </div>
         </div>
@@ -141,7 +142,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
         {tournament.status === "enrollments" && tournament.max_participants > 0 ? (
           <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10" title="Posti occupati">
             <div
-              className="h-full rounded-full bg-[#22E6C3]"
+              className={`h-full rounded-full ${isFull ? "bg-amber-400" : "bg-[#22E6C3]"}`}
               style={{
                 width: `${Math.min(100, Math.round((tournament.enrolled_users_count / tournament.max_participants) * 100))}%`,
               }}
@@ -152,7 +153,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
         <div className="mt-auto flex items-end justify-between gap-3 pt-3">
           <div className="min-w-0 text-[11px] text-zinc-500">
             <UserResultLine tournament={tournament} />
-            <CardFooterInfo tournament={tournament} countdown={countdown} />
+            <CardFooterInfo tournament={tournament} countdown={countdown} countdownLabel={countdownTarget.label} />
           </div>
 
           <Link
@@ -249,6 +250,16 @@ function UserResultLine({ tournament }: { tournament: Tournament }) {
   );
 }
 
+function FullPill({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-400/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-300 ${className}`}
+    >
+      Completo
+    </span>
+  );
+}
+
 function RegisteredPill({ className = "inline-flex" }: { className?: string }) {
   return (
     <span
@@ -319,6 +330,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function getActionLabel(tournament: Tournament) {
   if (tournament.status === "enrollments") {
+    if (isFullForVisitor(tournament)) return "Torneo pieno";
     return tournament.is_user_registered ? "Apri torneo" : "Iscriviti";
   }
 
@@ -332,6 +344,10 @@ function getActionLabel(tournament: Tournament) {
 
 /** Solo l'azione "Iscriviti" e' piena: e' l'unico CTA che porta un ricavo. */
 function getActionClassName(tournament: Tournament) {
+  if (isFullForVisitor(tournament)) {
+    return "border border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/15";
+  }
+
   if (tournament.status === "enrollments" && !tournament.is_user_registered) {
     return "bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] text-[#06111B] shadow-[0_8px_24px_rgba(34,230,195,0.25)] hover:from-[#1ED8B7] hover:to-[#22E6C3]";
   }
@@ -360,15 +376,17 @@ function getCardToneClassName(status: TournamentStatus) {
 function CardFooterInfo({
   tournament,
   countdown,
+  countdownLabel = "Chiusura tra",
 }: {
   tournament: Tournament;
   countdown: string | null;
+  countdownLabel?: string;
 }) {
   if (countdown) {
     return (
       <div className="min-w-0">
         <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-          Chiusura tra
+          {countdownLabel}
         </p>
         <p className="animate-countdown-beat origin-left font-mono text-xl font-black tabular-nums leading-tight text-[#3AF5D4] lg:text-2xl">
           {countdown}
