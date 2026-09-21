@@ -276,7 +276,7 @@ export function TeamBuilder({
         src="/images/tournament-pitch-bg.png"
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover"
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-80 [mask-image:linear-gradient(to_bottom,transparent_0%,black_22%,black_62%,transparent_100%)]"
       />
       <div className="hidden flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:flex sm:px-6">
         <div className="flex items-center gap-3">
@@ -408,7 +408,7 @@ export function TeamBuilder({
             })}
           </div>
 
-          <div className="mx-3 mb-3 rounded-xl border border-white/10 bg-black/25 p-3 sm:mx-5 sm:p-4">
+          <div className="mx-3 mb-3 rounded-xl border border-[#1D6D68]/50 bg-[#06111B]/85 p-3 backdrop-blur-sm sm:mx-auto sm:mb-4 sm:w-fit sm:max-w-[calc(100%-2.5rem)] sm:p-3">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-white">
                 <span className="text-[#22E6C3]"><BenchIcon /></span>
@@ -416,7 +416,7 @@ export function TeamBuilder({
               </p>
               <p className="text-[10px] text-zinc-500">{BENCH_SLOT_KEYS.length} slot per le riserve</p>
             </div>
-            <div className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 pb-1 pt-3 sm:justify-between sm:snap-none">
+            <div className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 pb-1 pt-3 sm:justify-center sm:gap-1 sm:snap-none">
               {BENCH_SLOT_KEYS.map((slotKey) => {
                 const assignment = lineup[slotKey];
                 const player = findPlayer(assignment?.player_id);
@@ -912,7 +912,7 @@ function PlayerCard({
   const roleAsset = getRoleAsset(slotKey);
 
   return (
-    <div className={`flex flex-col items-center gap-1 ${size === "bench" ? "w-[72px] shrink-0" : "w-14 sm:w-20"}`}>
+    <div className={`flex flex-col items-center gap-1 ${size === "bench" ? "w-[72px] shrink-0 sm:w-[92px]" : "w-14 sm:w-20"}`}>
       <div className="relative">
         <button
           type="button"
@@ -927,13 +927,7 @@ function PlayerCard({
           }
           className={`relative flex items-center justify-center overflow-hidden rounded-full text-[10px] font-black shadow-lg transition ${avatarSize} ${
             player
-              ? `border-2 bg-[#0F1E2E] text-white ring-1 ring-[#06111B]/70 sm:ring-0 ${getMobileFilledRingClass(slotKey, didNotPlay)} ${
-                  isCaptain
-                    ? "sm:border-amber-400"
-                    : didNotPlay
-                      ? "sm:border-zinc-600"
-                      : "sm:border-[#22E6C3]"
-                }`
+              ? `border-2 bg-[#0F1E2E] text-white ring-1 ring-[#06111B]/70 ${getMobileFilledRingClass(slotKey, didNotPlay)}`
               : `${getMobileEmptySlotClass(slotKey)} hover:scale-105 sm:border-0 sm:bg-transparent sm:text-white sm:shadow-lg`
           } ${readOnly && !isInspectable ? "cursor-default disabled:opacity-100 hover:scale-100" : ""} ${isInspectable ? "cursor-pointer hover:scale-105 hover:border-[#3AF5D4]" : ""}`}
         >
@@ -997,12 +991,9 @@ function PlayerCard({
         {player && isCaptain ? (
           <span
             title="Capitano"
-            className="absolute -right-1 -top-1 z-20 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-black shadow sm:-right-1.5 sm:-top-1.5 sm:h-5 sm:w-5 sm:text-[9px] sm:font-black"
+            className="absolute -right-1 -top-1 z-20 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-black shadow sm:-right-1.5 sm:-top-1.5 sm:h-5 sm:w-5"
           >
-            <span className="sm:hidden">
-              <StarIcon />
-            </span>
-            <span className="hidden sm:inline">C</span>
+            <StarIcon />
           </span>
         ) : null}
 
@@ -1057,11 +1048,11 @@ function PlayerCard({
             </span>
           ) : readOnly && isCaptain && typeof points === "number" ? (
             <span className="flex flex-col items-center gap-0.5">
-              <span className="rounded-full border border-amber-400/70 bg-amber-400/15 px-2 py-0.5 text-[10px] font-black leading-none text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)] sm:px-2.5 sm:py-1 sm:text-sm">
+              <span className="rounded-full border-2 border-amber-400 bg-[#06111B] px-2 py-0.5 text-[10px] font-black leading-none text-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.55)] sm:px-2.5 sm:py-1 sm:text-sm">
                 {formatPlayerPoints(points)} pt
               </span>
               {bonusPoints ? (
-                <span className="text-[8px] font-black leading-none text-amber-400/90 sm:text-[10px]">
+                <span className="rounded-full bg-[#06111B]/90 px-1.5 py-0.5 text-[8px] font-black leading-none text-amber-300 sm:text-[10px]">
                   +{formatPlayerPoints(bonusPoints)} bonus
                 </span>
               ) : null}
