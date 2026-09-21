@@ -50,6 +50,9 @@ export function TeamBuilder({
 }) {
   const { token } = useAuth();
   const isReadOnly = mode === "view";
+  // Solo a torneo avviato ha senso distinguere chi ha giocato da chi no.
+  const showPlayedState =
+    isReadOnly && ["in-progress", "finished", "paid"].includes(tournament.status);
   const isMobile = !useMediaQuery("(min-width: 640px)");
   const enrollmentCountdown = useCountdown(
     tournament.status === "enrollments"
@@ -306,16 +309,18 @@ export function TeamBuilder({
               />
             </>
           )}
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            aria-label="Chiudi"
-            title="Chiudi"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/15 text-zinc-300 transition hover:border-[#22E6C3]/40 hover:bg-[#22E6C3]/10 hover:text-[#3AF5D4] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <CloseIcon />
-          </button>
+          {isReadOnly ? null : (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              aria-label="Chiudi"
+              title="Chiudi"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/15 text-zinc-300 transition hover:border-[#22E6C3]/40 hover:bg-[#22E6C3]/10 hover:text-[#3AF5D4] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <CloseIcon />
+            </button>
+          )}
         </div>
       </div>
 
@@ -331,16 +336,18 @@ export function TeamBuilder({
             </span>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          aria-label="Chiudi formazione"
-          title="Chiudi"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/15 text-zinc-300 disabled:opacity-50"
-        >
-          <CloseIcon />
-        </button>
+        {isReadOnly ? null : (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            aria-label="Chiudi formazione"
+            title="Chiudi"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/15 text-zinc-300 disabled:opacity-50"
+          >
+            <CloseIcon />
+          </button>
+        )}
       </div>
 
       <div className={isReadOnly ? "" : "grid xl:grid-cols-[minmax(0,1fr)_310px]"}>
@@ -380,6 +387,7 @@ export function TeamBuilder({
                   teamLogoById={teamLogoById}
                   isCaptain={Boolean(assignment?.is_captain)}
                   points={formationEntry?.points}
+                  didNotPlay={showPlayedState && (formationEntry?.minutes_played ?? 0) === 0}
                   readOnly={isReadOnly}
                   isInspectable={Boolean(isReadOnly && player && onPlayerInspect)}
                   onOpenPicker={() => handleAvatarTap(slotKey, Boolean(player))}
@@ -412,6 +420,7 @@ export function TeamBuilder({
                       teamLogoById={teamLogoById}
                       isCaptain={Boolean(assignment?.is_captain)}
                       points={formationEntry?.points}
+                      didNotPlay={showPlayedState && (formationEntry?.minutes_played ?? 0) === 0}
                       size="bench"
                       readOnly={isReadOnly}
                       isInspectable={Boolean(isReadOnly && player && onPlayerInspect)}
@@ -845,6 +854,7 @@ function PlayerCard({
   teamLogoById,
   isCaptain,
   points,
+  didNotPlay = false,
   size,
   readOnly = false,
   isInspectable = false,
@@ -857,6 +867,7 @@ function PlayerCard({
   teamLogoById: Map<number, string>;
   isCaptain: boolean;
   points?: number;
+  didNotPlay?: boolean;
   size: "pitch" | "bench";
   readOnly?: boolean;
   isInspectable?: boolean;
@@ -889,7 +900,9 @@ function PlayerCard({
             player
               ? isCaptain
                 ? "border-2 border-amber-400 bg-[#0F1E2E] text-white"
-                : "border-2 border-[#22E6C3] bg-[#0F1E2E] text-white"
+                : didNotPlay
+                  ? "border-2 border-zinc-600 bg-[#0F1E2E] text-white"
+                  : "border-2 border-[#22E6C3] bg-[#0F1E2E] text-white"
               : `${getMobileEmptySlotClass(slotKey)} hover:scale-105 sm:border-0 sm:bg-transparent sm:text-white sm:shadow-lg`
           } ${readOnly && !isInspectable ? "cursor-default disabled:opacity-100 hover:scale-100" : ""} ${isInspectable ? "cursor-pointer hover:scale-105 hover:border-[#3AF5D4]" : ""}`}
         >
@@ -899,7 +912,7 @@ function PlayerCard({
               <img
                 src={player.image_path}
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover"
+                className={`absolute inset-0 h-full w-full object-cover ${didNotPlay ? "opacity-40 grayscale" : ""}`}
               />
             ) : (
               getInitials(player.display_name)
@@ -980,8 +993,12 @@ function PlayerCard({
             <span className="sm:hidden">{getSurname(player.display_name)}</span>
             <span className="hidden sm:inline">{player.display_name}</span>
           </span>
-          {readOnly && typeof points === "number" ? (
-            <span className="rounded-full border border-[#22E6C3]/35 bg-[#123A3B]/90 px-1.5 py-0.5 text-[8px] font-black leading-none text-[#3AF5D4] shadow">
+          {readOnly && didNotPlay ? (
+            <span className="rounded-full border border-zinc-600 bg-zinc-800/90 px-1.5 py-0.5 text-[8px] font-black uppercase leading-none tracking-wide text-zinc-400 shadow">
+              Non giocato
+            </span>
+          ) : readOnly && typeof points === "number" ? (
+            <span className="rounded-full border border-[#22E6C3]/35 bg-[#123A3B]/90 px-1.5 py-0.5 text-[8px] font-black leading-none text-[#3AF5D4] shadow sm:px-2 sm:py-1 sm:text-[10px]">
               {formatPlayerPoints(points)} pt
             </span>
           ) : null}
@@ -1055,6 +1072,7 @@ function PitchSlot({
   teamLogoById,
   isCaptain,
   points,
+  didNotPlay = false,
   readOnly = false,
   isInspectable = false,
   onOpenPicker,
@@ -1068,6 +1086,7 @@ function PitchSlot({
   teamLogoById: Map<number, string>;
   isCaptain: boolean;
   points?: number;
+  didNotPlay?: boolean;
   readOnly?: boolean;
   isInspectable?: boolean;
   onOpenPicker: () => void;
@@ -1092,6 +1111,7 @@ function PitchSlot({
         teamLogoById={teamLogoById}
         isCaptain={isCaptain}
         points={points}
+        didNotPlay={didNotPlay}
         size="pitch"
         readOnly={readOnly}
         isInspectable={isInspectable}

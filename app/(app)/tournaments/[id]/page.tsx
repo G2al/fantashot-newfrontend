@@ -105,6 +105,15 @@ export default function TournamentDetailPage({
     };
   }, [reload]);
 
+  // Iscritto ma formazione non piu' modificabile (iscrizioni chiuse, torneo in
+  // corso o finito): la propria squadra si vede sempre, in sola lettura.
+  const showOwnTeamView = Boolean(
+    tournament?.is_user_registered &&
+      tournament.user_fanta_team &&
+      !tournament.is_editable &&
+      !isBuilding
+  );
+
   return (
     <div className="py-4 lg:py-5">
       <Link
@@ -193,7 +202,9 @@ export default function TournamentDetailPage({
 
             <div
               className={
-                activeTab === "formazione" && isBuilding ? "" : "p-3 sm:p-7"
+                activeTab === "formazione" && (isBuilding || showOwnTeamView)
+                  ? ""
+                  : "p-3 sm:p-7"
               }
             >
               {activeTab === "formazione" ? (
@@ -227,6 +238,16 @@ export default function TournamentDetailPage({
 
                       await Promise.all([reload(), walletRefresh]);
                     }}
+                  />
+                ) : showOwnTeamView && tournament.user_fanta_team ? (
+                  <TeamBuilder
+                    tournament={tournament}
+                    mode="view"
+                    viewTeam={{
+                      module_id: tournament.user_fanta_team.module_id,
+                      formation_data: tournament.user_fanta_team.formation_data,
+                    }}
+                    onCancel={() => undefined}
                   />
                 ) : (
                   <EnrollmentPanel
@@ -284,6 +305,21 @@ function TournamentDetailTabs({
       ))}
     </div>
   );
+}
+
+/**
+ * Il backend chiama la squadra "Nome Cognome's Team": non serve mostrarlo.
+ * Riga principale = nickname, secondaria = nome e cognome.
+ */
+function getRankingOwner(entry: TournamentRankingEntry) {
+  const teamOwnerName = entry.name.replace(/['’]s Team$/i, "").trim();
+  const fullName = entry.user.name?.trim() || teamOwnerName;
+  const nickname = entry.user.username?.trim() || fullName;
+
+  return {
+    nickname,
+    fullName: fullName && fullName !== nickname ? fullName : null,
+  };
 }
 
 function ClassificaPanel({
@@ -348,11 +384,15 @@ function ClassificaPanel({
     );
   }
 
+  const previewEntry = entries.find((entry) => entry.id === previewTeamId);
+  const previewOwner = previewEntry ? getRankingOwner(previewEntry) : null;
+
   return (
     <div className="space-y-2">
       {entries.map((entry, index) => {
         const position = index + 1;
         const isOwn = entry.id === ownTeamId;
+        const owner = getRankingOwner(entry);
 
         return (
           <button
@@ -376,17 +416,15 @@ function ClassificaPanel({
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-white">
-                {entry.name}
+                {owner.nickname}
                 {isOwn ? (
                   <span className="ml-2 text-[10px] font-black uppercase tracking-wide text-[#3AF5D4]">
                     Tu
                   </span>
                 ) : null}
               </p>
-              {entry.user.username || entry.user.name ? (
-                <p className="truncate text-xs text-zinc-500">
-                  {entry.user.username ?? entry.user.name}
-                </p>
+              {owner.fullName ? (
+                <p className="truncate text-xs text-zinc-500">{owner.fullName}</p>
               ) : null}
             </div>
             <div className="shrink-0 text-right">
@@ -407,6 +445,8 @@ function ClassificaPanel({
         <TeamPreviewModal
           tournament={tournament}
           teamId={previewTeamId}
+          title={previewOwner?.nickname}
+          subtitle={previewOwner?.fullName}
           onClose={() => setPreviewTeamId(null)}
         />
       ) : null}

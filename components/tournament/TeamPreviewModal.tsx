@@ -22,10 +22,14 @@ const NOT_STARTED_MESSAGE = "Tournament has not started yet";
 export function TeamPreviewModal({
   tournament,
   teamId,
+  title,
+  subtitle,
   onClose,
 }: {
   tournament: TournamentDetail;
   teamId: number;
+  title?: string;
+  subtitle?: string | null;
   onClose: () => void;
 }) {
   const { token } = useAuth();
@@ -91,15 +95,15 @@ export function TeamPreviewModal({
         onClick={(event) => {
           if (event.target === event.currentTarget) onClose();
         }}
-        className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-[#06111B] shadow-2xl sm:rounded-2xl"
+        className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden sm:max-w-5xl rounded-t-2xl bg-[#06111B] shadow-2xl sm:rounded-2xl"
       >
         <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-black/20 px-5 py-4">
           <div className="min-w-0">
             <p className="truncate text-base font-black text-white">
-              {team?.name ?? "Formazione"}
+              {title ?? team?.name ?? "Formazione"}
             </p>
             <p className="truncate text-xs text-zinc-500">
-              {team?.user.name ?? " "}
+              {subtitle ?? team?.user.name ?? " "}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
