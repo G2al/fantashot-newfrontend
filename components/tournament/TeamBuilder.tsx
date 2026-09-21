@@ -387,7 +387,8 @@ export function TeamBuilder({
                   teamLogoById={teamLogoById}
                   isCaptain={Boolean(assignment?.is_captain)}
                   points={formationEntry?.points}
-                  didNotPlay={showPlayedState && (formationEntry?.minutes_played ?? 0) === 0}
+                  didNotPlay={showPlayedState && !entryCountsForPoints(formationEntry)}
+                  substitution={showPlayedState ? (formationEntry?.substitution ?? null) : null}
                   readOnly={isReadOnly}
                   isInspectable={Boolean(isReadOnly && player && onPlayerInspect)}
                   onOpenPicker={() => handleAvatarTap(slotKey, Boolean(player))}
@@ -420,7 +421,8 @@ export function TeamBuilder({
                       teamLogoById={teamLogoById}
                       isCaptain={Boolean(assignment?.is_captain)}
                       points={formationEntry?.points}
-                      didNotPlay={showPlayedState && (formationEntry?.minutes_played ?? 0) === 0}
+                      didNotPlay={showPlayedState && !entryCountsForPoints(formationEntry)}
+                  substitution={showPlayedState ? (formationEntry?.substitution ?? null) : null}
                       size="bench"
                       readOnly={isReadOnly}
                       isInspectable={Boolean(isReadOnly && player && onPlayerInspect)}
@@ -837,6 +839,13 @@ function getTournamentStatusLabel(status: TournamentDetail["status"]) {
   }[status];
 }
 
+/** Fonte di verita' e' il backend; il fallback sui minuti serve solo se il campo manca. */
+function entryCountsForPoints(entry?: FantaTeamFormationEntry): boolean {
+  if (!entry) return true;
+  if (typeof entry.counts_for_points === "boolean") return entry.counts_for_points;
+  return (entry.minutes_played ?? 0) > 0;
+}
+
 /** Formatta i punti del giocatore senza zeri decimali inutili. */
 function formatPlayerPoints(points: number): string {
   if (!Number.isFinite(points)) return "0";
@@ -855,6 +864,7 @@ function PlayerCard({
   isCaptain,
   points,
   didNotPlay = false,
+  substitution = null,
   size,
   readOnly = false,
   isInspectable = false,
@@ -868,6 +878,7 @@ function PlayerCard({
   isCaptain: boolean;
   points?: number;
   didNotPlay?: boolean;
+  substitution?: FantaTeamFormationEntry["substitution"];
   size: "pitch" | "bench";
   readOnly?: boolean;
   isInspectable?: boolean;
@@ -959,6 +970,18 @@ function PlayerCard({
             C
           </span>
         ) : null}
+
+        {player && substitution ? (
+          <span
+            title={substitution.status === "in" ? "Entra al posto di un titolare" : "Sostituito da una riserva"}
+            aria-label={substitution.status === "in" ? "Entra" : "Esce"}
+            className={`absolute -bottom-1 -left-1 z-20 grid h-4 w-4 place-items-center rounded-full border border-[#06111B] shadow sm:h-5 sm:w-5 ${
+              substitution.status === "in" ? "bg-green-500 text-[#06111B]" : "bg-red-500 text-white"
+            }`}
+          >
+            <SubstitutionArrowIcon direction={substitution.status === "in" ? "up" : "down"} />
+          </span>
+        ) : null}
       </div>
 
       {player && !readOnly ? (
@@ -995,7 +1018,7 @@ function PlayerCard({
           </span>
           {readOnly && didNotPlay ? (
             <span className="rounded-full border border-zinc-600 bg-zinc-800/90 px-1.5 py-0.5 text-[8px] font-black uppercase leading-none tracking-wide text-zinc-400 shadow">
-              Assente
+              {size === "bench" ? "Riserva" : "Assente"}
             </span>
           ) : readOnly && typeof points === "number" ? (
             <span className="rounded-full border border-[#22E6C3]/35 bg-[#123A3B]/90 px-1.5 py-0.5 text-[8px] font-black leading-none text-[#3AF5D4] shadow sm:px-2 sm:py-1 sm:text-[10px]">
@@ -1073,6 +1096,7 @@ function PitchSlot({
   isCaptain,
   points,
   didNotPlay = false,
+  substitution = null,
   readOnly = false,
   isInspectable = false,
   onOpenPicker,
@@ -1087,6 +1111,7 @@ function PitchSlot({
   isCaptain: boolean;
   points?: number;
   didNotPlay?: boolean;
+  substitution?: FantaTeamFormationEntry["substitution"];
   readOnly?: boolean;
   isInspectable?: boolean;
   onOpenPicker: () => void;
@@ -1112,6 +1137,7 @@ function PitchSlot({
         isCaptain={isCaptain}
         points={points}
         didNotPlay={didNotPlay}
+        substitution={substitution}
         size="pitch"
         readOnly={readOnly}
         isInspectable={isInspectable}
@@ -1707,6 +1733,23 @@ function CloseIcon() {
       strokeLinecap="round"
     >
       <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function SubstitutionArrowIcon({ direction }: { direction: "up" | "down" }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-2.5 w-2.5 sm:h-3 sm:w-3"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {direction === "up" ? <path d="M12 19V5M5 12l7-7 7 7" /> : <path d="M12 5v14M5 12l7 7 7-7" />}
     </svg>
   );
 }

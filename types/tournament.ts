@@ -116,6 +116,10 @@ export type FantaTeamFormationEntry = {
   is_captain: boolean | 0 | 1;
   team_images: string[];
   minutes_played: number;
+  /** False per titolare assente e per riserva non entrata. Decide il backend, non calcolare in frontend. */
+  counts_for_points?: boolean;
+  /** "out" titolare sostituito, "in" riserva entrata; with_id = fanta_lineup_id dell'altro giocatore. */
+  substitution?: { status: "in" | "out"; with_id: number } | null;
 };
 
 export type UserFantaTeam = {
