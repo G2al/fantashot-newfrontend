@@ -340,7 +340,7 @@ export function TeamBuilder({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover opacity-80 [mask-image:linear-gradient(to_bottom,transparent_0%,black_22%,black_62%,transparent_100%)]"
       />
-      <div className="relative z-[1] hidden flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:flex sm:px-6">
+      <div className="relative z-[2] hidden flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:flex sm:px-6">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#22E6C3]/12 text-[#22E6C3]">
             <FormationIcon />
@@ -1012,13 +1012,13 @@ function PlayerCard({
 }) {
   const avatarSize =
     size === "pitch"
-      ? "h-10 w-10 sm:h-12 sm:w-12 2xl:h-14 2xl:w-14"
-      : "h-10 w-10 sm:h-12 sm:w-12";
+      ? "h-10 w-10 sm:h-14 sm:w-14 2xl:h-16 2xl:w-16"
+      : "h-10 w-10 sm:h-14 sm:w-14";
   const teamLogo = player?.teams[0] ? teamLogoById.get(player.teams[0].id) : null;
   const roleAsset = getRoleAsset(slotKey);
 
   return (
-    <div className={`flex flex-col items-center gap-1 ${size === "bench" ? "w-[72px] shrink-0 sm:w-[92px]" : "w-14 sm:w-20"}`}>
+    <div className={`flex flex-col items-center gap-1 ${size === "bench" ? "w-[72px] shrink-0 sm:w-[104px]" : "w-14 sm:w-24"}`}>
       <div className="relative">
         <button
           type="button"
@@ -1074,7 +1074,7 @@ function PlayerCard({
             alt={getSlotLabel(slotKey)}
             width={32}
             height={32}
-            className="absolute -left-1.5 -top-1.5 z-20 hidden h-5 w-5 drop-shadow-lg sm:-left-2 sm:-top-2 sm:block sm:h-7 sm:w-7"
+            className="absolute -left-1.5 -top-1.5 z-20 hidden h-5 w-5 drop-shadow-lg sm:-left-2 sm:-top-2 sm:block sm:h-8 sm:w-8"
           />
         ) : null}
 
@@ -1144,7 +1144,7 @@ function PlayerCard({
 
       {player ? (
         <>
-          <span className="max-w-14 truncate rounded-full bg-black/80 px-1.5 py-0.5 text-center text-[8px] font-bold leading-tight text-white drop-shadow sm:max-w-[88px] sm:px-2 sm:text-[10px]">
+          <span className="max-w-14 truncate rounded-full bg-black/80 px-1.5 py-0.5 text-center text-[8px] font-bold leading-tight text-white drop-shadow sm:max-w-[104px] sm:px-2.5 sm:py-1 sm:text-xs">
             <span className="sm:hidden">{getSurname(player.display_name)}</span>
             <span className="hidden sm:inline">{player.display_name}</span>
           </span>
@@ -1164,7 +1164,7 @@ function PlayerCard({
               ) : null}
             </span>
           ) : readOnly && typeof points === "number" ? (
-            <span className="rounded-full border border-[#22E6C3]/35 bg-[#123A3B]/90 px-1.5 py-0.5 text-[8px] font-black leading-none text-[#3AF5D4] shadow sm:px-2 sm:py-1 sm:text-[10px]">
+            <span className="rounded-full border border-[#22E6C3]/35 bg-[#123A3B]/90 px-1.5 py-0.5 text-[8px] font-black leading-none text-[#3AF5D4] shadow sm:px-2.5 sm:py-1 sm:text-xs">
               {formatPlayerPoints(points)} pt
             </span>
           ) : null}
@@ -1410,7 +1410,7 @@ function PlayerPickerModal({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Cerca giocatore..."
-          className="mt-4 h-10 w-full rounded-full border border-[#1E3448] bg-[#101D2C] px-3.5 text-xs text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-[#22E6C3]/50 sm:h-9"
+          className="mt-4 h-12 w-full rounded-full border border-[#1E3448] bg-[#101D2C] px-5 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-[#22E6C3]/50"
         />
 
         <div className="mt-4">

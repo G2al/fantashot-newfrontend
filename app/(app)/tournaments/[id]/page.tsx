@@ -254,7 +254,11 @@ export default function TournamentDetailPage({
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-3 gap-2 sm:mt-8 sm:gap-0 sm:divide-x sm:divide-white/10 sm:rounded-xl sm:border sm:border-white/10 sm:bg-[#06111B]/85 sm:py-2 sm:backdrop-blur lg:mt-0 lg:justify-self-end lg:w-full lg:max-w-[600px]">
+              <div className="flex flex-col gap-3 sm:mt-8 lg:mt-0 lg:w-full lg:max-w-[600px] lg:justify-self-end">
+              {tournament.status === "enrollments" ? (
+                <EnrollmentCountdownHero endDate={tournament.enrollments_end_date} />
+              ) : null}
+              <div className="grid grid-cols-3 gap-2 sm:gap-0 sm:divide-x sm:divide-white/10 sm:rounded-xl sm:border sm:border-white/10 sm:bg-[#06111B]/85 sm:py-2 sm:backdrop-blur">
                 <StatTile icon={<TrophyIcon />} label="Montepremi" value={formatPrizePool(tournament.prize_pool)} />
                 <div className="min-w-0">
                   {tournament.winner && ["finished", "paid"].includes(tournament.status) ? (
@@ -275,6 +279,7 @@ export default function TournamentDetailPage({
                 </div>
                 <StatTile icon={<UsersIcon />} label="Partecipanti" value={`${tournament.enrolled_users_count}/${tournament.max_participants}`} />
               </div>
+              </div>
             </div>
 
             <div className="absolute right-3 top-3 sm:right-5 sm:top-5">
@@ -285,9 +290,6 @@ export default function TournamentDetailPage({
               </div>
               <div className="hidden flex-col items-end gap-2 sm:flex">
                 <StatusBadge status={tournament.status} />
-                {tournament.status === "enrollments" ? (
-                  <EnrollmentCountdown endDate={tournament.enrollments_end_date} />
-                ) : null}
               </div>
             </div>
           </article>
@@ -763,15 +765,28 @@ function StatusBadge({ status }: { status: TournamentDetail["status"] }) {
   );
 }
 
-function EnrollmentCountdown({ endDate }: { endDate: string }) {
+/** Solo desktop: il countdown e' l'informazione piu' urgente, quindi domina l'hero e pulsa. */
+function EnrollmentCountdownHero({ endDate }: { endDate: string }) {
   const countdown = useCountdown(endDate);
 
   if (!countdown) return null;
 
   return (
-    <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-zinc-200 backdrop-blur-sm">
-      <span className="text-[#1ED8B7]"><CalendarIcon /></span>
-      Chiude tra <span className="font-mono text-white">{countdown}</span>
+    <div className="hidden items-center justify-between gap-4 rounded-xl border border-[#22E6C3]/45 bg-[#06111B]/85 px-5 py-3 shadow-[0_0_32px_rgba(34,230,195,0.18)] backdrop-blur sm:flex">
+      <div className="flex items-center gap-2.5">
+        <span className="grid h-9 w-9 place-items-center rounded-lg border border-[#1D6D68] bg-[#123A3B] text-[#3AF5D4]">
+          <CalendarIcon />
+        </span>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-400">
+            Le iscrizioni chiudono tra
+          </p>
+          <p className="text-[11px] text-zinc-500">Consegna la formazione in tempo</p>
+        </div>
+      </div>
+      <p className="animate-countdown-beat origin-right font-mono text-4xl font-black tabular-nums leading-none text-[#3AF5D4]">
+        {countdown}
+      </p>
     </div>
   );
 }
