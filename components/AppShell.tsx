@@ -55,29 +55,52 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, isReady, router]);
 
+  // Saldo "live": il wallet salvato al login puo' essere vecchio (ricariche,
+  // vincite), quindi lo si riallinea all'apertura, al ritorno sulla scheda e
+  // a intervalli mentre la scheda e' visibile.
+  const walletsSignatureRef = useRef<string>("");
+
   useEffect(() => {
-    if (!token || user?.wallets) {
+    walletsSignatureRef.current = JSON.stringify(user?.wallets ?? null);
+  }, [user?.wallets]);
+
+  useEffect(() => {
+    if (!token) {
       return;
     }
 
     let isActive = true;
 
-    void Promise.resolve()
-      .then(() => getMe(token))
-      .then(({ user: currentUser, wallets }) => {
-        if (isActive) {
+    function refreshWallets() {
+      if (document.visibilityState === "hidden") return;
+
+      getMe(token as string)
+        .then(({ user: currentUser, wallets }) => {
+          if (!isActive) return;
+          // Niente setUser se il saldo non e' cambiato: evita rerender a vuoto.
+          if (JSON.stringify(wallets ?? null) === walletsSignatureRef.current) {
+            return;
+          }
           setUser({ ...currentUser, wallets });
-        }
-      })
-      .catch(() => {
-        // Il profilo base ricevuto da login/register resta comunque
-        // utilizzabile anche se questo refresh fallisce.
-      });
+        })
+        .catch(() => {
+          // Il profilo base ricevuto da login/register resta comunque
+          // utilizzabile anche se questo refresh fallisce.
+        });
+    }
+
+    void Promise.resolve().then(refreshWallets);
+    const intervalId = window.setInterval(refreshWallets, 20000);
+    window.addEventListener("focus", refreshWallets);
+    document.addEventListener("visibilitychange", refreshWallets);
 
     return () => {
       isActive = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshWallets);
+      document.removeEventListener("visibilitychange", refreshWallets);
     };
-  }, [setUser, token, user?.wallets]);
+  }, [setUser, token]);
 
   if (!isReady) {
     return (

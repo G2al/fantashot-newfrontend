@@ -94,3 +94,42 @@ body {
     animation: none;
   }
 }
+
+@keyframes countdown-beat {
+  0%, 100% {
+    transform: scale(1);
+    text-shadow: 0 0 0 rgba(34, 230, 195, 0);
+  }
+
+  50% {
+    transform: scale(1.07);
+    text-shadow: 0 0 14px rgba(34, 230, 195, 0.65);
+  }
+}
+
+.animate-countdown-beat {
+  animation: countdown-beat 1.4s ease-in-out infinite;
+}
+
+@keyframes alert-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-alert-pop {
+  animation: alert-pop 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-countdown-beat,
+  .animate-alert-pop {
+    animation: none;
+  }
+}

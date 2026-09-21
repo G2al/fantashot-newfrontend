@@ -333,10 +333,14 @@ function CardFooterInfo({
 }) {
   if (countdown) {
     return (
-      <p className="truncate">
-        Chiusura tra{" "}
-        <span className="font-mono font-semibold text-[#22E6C3]">{countdown}</span>
-      </p>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+          Chiusura tra
+        </p>
+        <p className="animate-countdown-beat origin-left font-mono text-xl font-black tabular-nums leading-tight text-[#3AF5D4] lg:text-2xl">
+          {countdown}
+        </p>
+      </div>
     );
   }
 

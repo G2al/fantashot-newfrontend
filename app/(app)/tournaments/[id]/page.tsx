@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { LeagueLogo } from "@/components/lobby/shared";
 import { EventsPanel } from "@/components/tournament/EventsPanel";
@@ -17,6 +18,7 @@ import {
 } from "@/components/tournament/TeamPreviewModal";
 import { useAuth } from "@/hooks/use-auth";
 import { useCountdown } from "@/hooks/use-countdown";
+import { getWalletBalanceMinor } from "@/lib/wallet";
 import { getTournament, getTournamentRanking } from "@/lib/api/tournaments";
 import { getMe } from "@/lib/auth-api";
 import { formatMoney, formatPrizePool } from "@/lib/format";
@@ -103,6 +105,15 @@ export default function TournamentDetailPage({
     entry: FantaTeamFormationEntry;
   } | null>(null);
 
+  const router = useRouter();
+  const leaveGuardRef = useRef<((proceed: () => void) => boolean) | null>(null);
+  const registerLeaveGuard = useCallback(
+    (guard: ((proceed: () => void) => boolean) | null) => {
+      leaveGuardRef.current = guard;
+    },
+    []
+  );
+
   function handleOwnPlayerInspect(entry: FantaTeamFormationEntry) {
     const fantaLineupId = entry.fanta_lineup_id ?? entry.id;
     if (!Number.isInteger(fantaLineupId) || fantaLineupId <= 0) return;
@@ -183,6 +194,11 @@ export default function TournamentDetailPage({
     <div className="py-4 lg:py-5">
       <Link
         href="/dashboard"
+        onClick={(event) => {
+          // Formazione con modifiche non salvate: chiede conferma prima di uscire.
+          const isBlocked = leaveGuardRef.current?.(() => router.push("/dashboard"));
+          if (isBlocked) event.preventDefault();
+        }}
         className="inline-flex items-center gap-2 text-sm font-medium text-[#3AF5D4] transition hover:text-[#E9FFFA]"
       >
         <ArrowLeftIcon />
@@ -300,6 +316,7 @@ export default function TournamentDetailPage({
                     tournament={tournament}
                     mode={tournament.is_user_registered ? "edit" : "create"}
                     onCancel={() => setIsBuilding(false)}
+                    onRegisterLeaveGuard={registerLeaveGuard}
                     onSaved={async () => {
                       const isNewEnrollment = !tournament.is_user_registered;
                       const walletRefresh =
@@ -593,9 +610,13 @@ function EnrollmentPanel({
   isAuthenticated: boolean;
   onStart: () => void;
 }) {
+  const { user } = useAuth();
   const countdown = useCountdown(
     tournament.status === "enrollments" ? tournament.enrollments_end_date : null
   );
+  const balance = getWalletBalanceMinor(user?.wallets);
+  const hasInsufficientBalance =
+    balance !== null && balance < tournament.buy_in.amount;
 
   if (!isAuthenticated) {
     return (
@@ -674,13 +695,23 @@ function EnrollmentPanel({
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={onStart}
-        className="flex h-12 items-center rounded-lg bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] px-6 text-sm font-black uppercase tracking-wide text-[#06111B] shadow-[0_10px_30px_rgba(34,230,195,0.35)] transition hover:from-[#1ED8B7] hover:to-[#22E6C3]"
-      >
-        Crea la formazione · Quota {formatMoney(tournament.buy_in)}
-      </button>
+      {hasInsufficientBalance && balance !== null ? (
+        <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm">
+          <p className="font-black text-amber-300">Saldo insufficiente</p>
+          <p className="mt-0.5 text-xs text-zinc-300">
+            Quota {formatMoney(tournament.buy_in)} · il tuo saldo è{" "}
+            {formatMoney({ ...tournament.buy_in, amount: balance })}. Ricarica il wallet per iscriverti.
+          </p>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onStart}
+          className="flex h-12 items-center rounded-lg bg-gradient-to-r from-[#22E6C3] to-[#18C6A7] px-6 text-sm font-black uppercase tracking-wide text-[#06111B] shadow-[0_10px_30px_rgba(34,230,195,0.35)] transition hover:from-[#1ED8B7] hover:to-[#22E6C3]"
+        >
+          Crea la formazione · Quota {formatMoney(tournament.buy_in)}
+        </button>
+      )}
     </div>
   );
 }

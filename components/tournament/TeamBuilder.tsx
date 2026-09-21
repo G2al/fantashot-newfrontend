@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { CenterAlert } from "@/components/CenterAlert";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { getWalletBalanceMinor } from "@/lib/wallet";
 import { useAuth } from "@/hooks/use-auth";
 import { useCountdown } from "@/hooks/use-countdown";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -37,6 +40,7 @@ export function TeamBuilder({
   onSaved,
   onPlayerInspect,
   onCancel,
+  onRegisterLeaveGuard,
 }: {
   tournament: TournamentDetail;
   mode: "create" | "edit" | "view";
@@ -48,8 +52,14 @@ export function TeamBuilder({
   onSaved?: () => void | Promise<void>;
   onPlayerInspect?: (entry: FantaTeamFormationEntry) => void;
   onCancel: () => void;
+  /**
+   * Il padre lo usa per chiedere "posso uscire?" da link esterni (es. "Torna ai
+   * tornei"). Ritorna true se c'e' un dialogo di conferma aperto e l'uscita e'
+   * sospesa; `proceed` viene chiamato solo se l'utente conferma.
+   */
+  onRegisterLeaveGuard?: (guard: ((proceed: () => void) => boolean) | null) => void;
 }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const isReadOnly = mode === "view";
   // Solo a torneo avviato ha senso distinguere chi ha giocato da chi no.
   const showPlayedState =
@@ -102,12 +112,39 @@ export function TeamBuilder({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!successMessage) return;
+  const [leavePending, setLeavePending] = useState<(() => void) | null>(null);
 
-    const timeoutId = window.setTimeout(() => setSuccessMessage(null), 3500);
-    return () => window.clearTimeout(timeoutId);
-  }, [successMessage]);
+  // Modifiche non salvate: formazione diversa da quella salvata (edit) oppure
+  // giocatori inseriti ma iscrizione non completata (create).
+  const isDirty =
+    !isReadOnly &&
+    (mode === "create"
+      ? Object.keys(lineup).length > 0
+      : Boolean(existingTeam) &&
+        (moduleId !== existingTeam?.module_id ||
+          serializeLineup(lineup) !==
+            serializeLineup(buildLineupFromFormationData(existingTeam?.formation_data ?? {}))));
+
+  useEffect(() => {
+    onRegisterLeaveGuard?.((proceed) => {
+      if (!isDirty) return false;
+      setLeavePending(() => proceed);
+      return true;
+    });
+
+    return () => onRegisterLeaveGuard?.(null);
+  }, [isDirty, onRegisterLeaveGuard]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+
+    function warnBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+    }
+
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [isDirty]);
 
   if (!selectedModule) {
     return (
@@ -129,6 +166,22 @@ export function TeamBuilder({
   ).length;
   const isComplete = missingSlots.length === 0 && captainCount === 1;
   const hasAnyPlayer = Object.keys(lineup).length > 0;
+  const benchCompleted = BENCH_SLOT_KEYS.filter((slot) => lineup[slot]).length;
+
+  function handleRequestClose() {
+    if (isDirty) {
+      setLeavePending(() => onCancel);
+    } else {
+      onCancel();
+    }
+  }
+
+  async function handleSaveAndLeave() {
+    const proceed = leavePending;
+    setLeavePending(null);
+    const saved = await handleSubmit();
+    if (saved) proceed?.();
+  }
 
   function findPlayer(playerId: number | undefined) {
     if (!playerId) return null;
@@ -228,8 +281,8 @@ export function TeamBuilder({
     }
   }
 
-  async function handleSubmit() {
-    if (!token) return;
+  async function handleSubmit(): Promise<boolean> {
+    if (!token) return false;
     setError(null);
     setSuccessMessage(null);
 
@@ -239,7 +292,13 @@ export function TeamBuilder({
           ? "Completa tutti gli slot (titolari e panchina) prima di salvare."
           : "Scegli esattamente un capitano prima di salvare."
       );
-      return;
+      return false;
+    }
+
+    const balance = getWalletBalanceMinor(user?.wallets);
+    if (mode === "create" && balance !== null && balance < tournament.buy_in.amount) {
+      setError("Saldo insufficiente per iscriverti a questo torneo.");
+      return false;
     }
 
     setIsSubmitting(true);
@@ -258,12 +317,14 @@ export function TeamBuilder({
 
       if (onSaved) await onSaved();
       setSuccessMessage("Formazione salvata con successo.");
+      return true;
     } catch (requestError) {
       setError(
         requestError instanceof ApiError
           ? translateTournamentError(requestError.message)
           : "Salvataggio non riuscito. Riprova."
       );
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -321,7 +382,7 @@ export function TeamBuilder({
           {isReadOnly ? null : (
             <button
               type="button"
-              onClick={onCancel}
+              onClick={handleRequestClose}
               disabled={isSubmitting}
               aria-label="Chiudi"
               title="Chiudi"
@@ -348,7 +409,7 @@ export function TeamBuilder({
         {isReadOnly ? null : (
           <button
             type="button"
-            onClick={onCancel}
+            onClick={handleRequestClose}
             disabled={isSubmitting}
             aria-label="Chiudi formazione"
             title="Chiudi"
@@ -460,13 +521,12 @@ export function TeamBuilder({
             tournament={tournament}
             completed={completedStarterSlots}
             total={starterSlotKeys.length}
+            benchCompleted={benchCompleted}
+            benchTotal={BENCH_SLOT_KEYS.length}
             mode={mode}
             isComplete={isComplete}
-            missingSlots={missingSlots.length}
             captainCount={captainCount}
             isSubmitting={isSubmitting}
-            error={error}
-            successMessage={successMessage}
             hasAnyPlayer={hasAnyPlayer}
             onClear={handleClear}
             onRandomize={handleRandomize}
@@ -477,19 +537,6 @@ export function TeamBuilder({
 
       {!isReadOnly ? (
         <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-[#1E3448] bg-[#06111B]/95 px-3 pt-2 shadow-[0_-14px_40px_rgba(0,0,0,0.5)] backdrop-blur-md sm:hidden">
-          {error ? (
-            <p className="mx-auto mb-2 max-w-md truncate rounded-md border border-red-500/20 bg-red-950/90 px-3 py-1.5 text-center text-[10px] font-semibold text-red-200">
-              {error}
-            </p>
-          ) : null}
-          {successMessage ? (
-            <p
-              role="status"
-              className="mx-auto mb-2 max-w-md rounded-md border border-green-500/25 bg-green-950/90 px-3 py-1.5 text-center text-[10px] font-semibold text-green-200"
-            >
-              {successMessage}
-            </p>
-          ) : null}
           <div className="mx-auto grid max-w-md grid-cols-[44px_minmax(84px,0.8fr)_minmax(0,1.4fr)] gap-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <button
               type="button"
@@ -566,6 +613,55 @@ export function TeamBuilder({
         />
       ) : null}
 
+      {error ? (
+        <CenterAlert kind="error" message={error} onClose={() => setError(null)} duration={4500} />
+      ) : successMessage ? (
+        <CenterAlert kind="success" message={successMessage} onClose={() => setSuccessMessage(null)} />
+      ) : null}
+
+      {leavePending ? (
+        <ConfirmDialog
+          title="Modifiche non salvate"
+          description={
+            mode === "create"
+              ? "Non hai completato l'iscrizione: se esci perdi la formazione che hai composto."
+              : "Hai modificato la formazione ma non l'hai salvata. Vuoi salvarla prima di uscire?"
+          }
+          onDismiss={() => setLeavePending(null)}
+          actions={
+            <>
+              {mode === "create" ? null : (
+                <button
+                  type="button"
+                  onClick={() => void handleSaveAndLeave()}
+                  className="flex h-11 items-center justify-center rounded-lg bg-[#22E6C3] px-4 text-sm font-black uppercase tracking-wide text-[#06111B] transition hover:bg-[#1ED8B7]"
+                >
+                  Salva ed esci
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  const proceed = leavePending;
+                  setLeavePending(null);
+                  proceed?.();
+                }}
+                className="flex h-11 items-center justify-center rounded-lg border border-red-500/40 px-4 text-sm font-black uppercase tracking-wide text-red-300 transition hover:bg-red-500/10"
+              >
+                Esci senza salvare
+              </button>
+              <button
+                type="button"
+                onClick={() => setLeavePending(null)}
+                className="flex h-10 items-center justify-center rounded-lg text-sm font-bold text-zinc-400 transition hover:text-white"
+              >
+                Continua a modificare
+              </button>
+            </>
+          }
+        />
+      ) : null}
+
       {isSubmitting ? (
         <div
           role="status"
@@ -627,13 +723,12 @@ function FormationSummary({
   tournament,
   completed,
   total,
+  benchCompleted,
+  benchTotal,
   mode,
   isComplete,
-  missingSlots,
   captainCount,
   isSubmitting,
-  error,
-  successMessage,
   hasAnyPlayer,
   onClear,
   onRandomize,
@@ -642,68 +737,53 @@ function FormationSummary({
   tournament: TournamentDetail;
   completed: number;
   total: number;
+  benchCompleted: number;
+  benchTotal: number;
   mode: "create" | "edit" | "view";
   isComplete: boolean;
-  missingSlots: number;
   captainCount: number;
   isSubmitting: boolean;
-  error: string | null;
-  successMessage: string | null;
   hasAnyPlayer: boolean;
   onClear: () => void;
   onRandomize: () => void;
   onSubmit: () => void;
 }) {
-  const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const missingStarters = total - completed;
+  const missingBench = benchTotal - benchCompleted;
   const competition =
     tournament.leagues.length > 1
       ? `${tournament.leagues.length} campionati`
       : tournament.leagues[0]?.name ?? "Non assegnata";
-  const stageLabel = missingSlots
-    ? `${missingSlots} titolari da inserire`
-    : captainCount === 1
-      ? "Formazione pronta"
-      : "Squadra completa: scegli il capitano";
+  const stageLabel =
+    missingStarters > 0 || missingBench > 0
+      ? `Mancano ${[
+          missingStarters > 0 ? `${missingStarters} titolari` : null,
+          missingBench > 0 ? `${missingBench} panchinari` : null,
+        ]
+          .filter(Boolean)
+          .join(" e ")}`
+      : captainCount === 1
+        ? "Formazione pronta"
+        : "Squadra completa: scegli il capitano";
 
   return (
     <aside className="border-t border-[#1E3448] bg-black/15 p-4 sm:border-[#22E6C3]/20 sm:p-5 xl:border-t-0">
       <div className="rounded-xl border border-[#1E3448] bg-[linear-gradient(145deg,rgba(15,30,46,0.9),rgba(6,17,27,0.96))] p-4 sm:border-[#22E6C3]/25">
         <section>
-        <div className="sm:hidden">
-          <div className="flex items-center gap-2 text-xs">
-            <span className={`h-2 w-2 shrink-0 rounded-full ${isComplete ? "bg-green-500" : "bg-amber-400"}`} />
-            <p className="min-w-0 flex-1 truncate font-semibold text-zinc-300">{stageLabel}</p>
-            <span className="shrink-0 font-black text-white">{completed}/{total}</span>
-          </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[#18C6A7] to-[#1ED8B7] transition-[width] duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="hidden sm:block">
-          <div className="flex items-center gap-2 text-[#22E6C3]">
+          <div className="hidden items-center gap-2 text-[#22E6C3] sm:flex">
             <FormationIcon />
             <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-white">
               Stato formazione
             </h3>
           </div>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#18C6A7] to-[#1ED8B7] transition-[width] duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <span className="text-sm font-black text-white">{completed}/{total}</span>
+          <div className="space-y-3 sm:mt-4">
+            <ProgressBar label="Titolari" done={completed} total={total} />
+            <ProgressBar label="Panchina" done={benchCompleted} total={benchTotal} />
           </div>
-          <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-4 text-xs">
-            <span className={`h-2 w-2 shrink-0 rounded-full ${isComplete ? "bg-[#1ED8B7]" : "bg-amber-400"}`} />
-            <p className="font-semibold text-zinc-300">{stageLabel}</p>
+          <div className="mt-3 flex items-center gap-2 text-xs sm:mt-4 sm:border-t sm:border-white/10 sm:pt-4">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${isComplete ? "bg-green-500" : "bg-amber-400"}`} />
+            <p className="min-w-0 flex-1 font-semibold text-zinc-300">{stageLabel}</p>
           </div>
-        </div>
         </section>
 
         <section className="mt-5 border-t border-[#1E3448] pt-5">
@@ -738,20 +818,6 @@ function FormationSummary({
         </section>
 
         <div className="mt-5 hidden rounded-xl border border-[#22E6C3]/25 bg-[#123A3B]/20 p-4 sm:block">
-          {error ? (
-            <p className="mb-3 rounded-lg border border-red-500/20 bg-red-950/60 px-3 py-2 text-xs text-red-200">
-              {error}
-            </p>
-          ) : null}
-          {successMessage ? (
-            <p
-              role="status"
-              className="mb-3 rounded-lg border border-green-500/25 bg-green-950/60 px-3 py-2 text-xs font-semibold text-green-200"
-            >
-              {successMessage}
-            </p>
-          ) : null}
-
           <div className="flex flex-col gap-2">
             <button
               type="button"
@@ -799,6 +865,38 @@ function FormationSummary({
         </div>
       </div>
     </aside>
+  );
+}
+
+function ProgressBar({ label, done, total }: { label: string; done: number; total: number }) {
+  const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+  const isDone = total > 0 && done === total;
+
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-xs">
+        <span className="font-semibold text-zinc-300">{label}</span>
+        <span className={`font-black ${isDone ? "text-green-400" : "text-white"}`}>
+          {done}/{total}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+        <div
+          className={`h-full rounded-full transition-[width] duration-300 ${
+            isDone ? "bg-green-500" : "bg-gradient-to-r from-[#18C6A7] to-[#1ED8B7]"
+          }`}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function serializeLineup(lineup: LineupPayload["lineup"]) {
+  return JSON.stringify(
+    Object.entries(lineup)
+      .map(([slot, entry]) => [slot, entry.player_id, Boolean(entry.is_captain)])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
   );
 }
 
