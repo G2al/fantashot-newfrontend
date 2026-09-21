@@ -206,7 +206,7 @@ export default function TournamentDetailPage({
               alt=""
               className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
             />
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(6,17,27,0.42)_0%,rgba(6,17,27,0.08)_58%,rgba(6,17,27,0.28)_100%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(6,17,27,0.42)_0%,rgba(6,17,27,0.08)_58%,rgba(6,17,27,0.28)_100%)] sm:bg-[linear-gradient(90deg,rgba(6,17,27,0.78)_0%,rgba(6,17,27,0.6)_55%,rgba(6,17,27,0.72)_100%)]" />
 
             <div className="relative grid min-h-[128px] gap-4 p-4 pt-12 sm:min-h-[168px] sm:gap-6 sm:p-7 sm:pt-16 lg:grid-cols-[minmax(280px,0.85fr)_minmax(520px,1.4fr)] lg:items-center lg:pt-7">
               <div className="min-w-0">
@@ -224,7 +224,7 @@ export default function TournamentDetailPage({
                     {tournament.leagues.map((league) => (
                       <div
                         key={league.id}
-                        className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1.5"
+                        className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-1"
                       >
                         <LeagueLogo logoUrl={league.logo} label={league.name} />
                         <span className="text-xs font-bold text-zinc-100">
@@ -236,9 +236,28 @@ export default function TournamentDetailPage({
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-3 gap-2 lg:pr-3">
+              <div className="grid grid-cols-3 gap-2 sm:mt-8 sm:gap-0 sm:divide-x sm:divide-white/10 sm:rounded-xl sm:border sm:border-white/10 sm:bg-[#06111B]/85 sm:py-2 sm:backdrop-blur lg:mt-0 lg:justify-self-end lg:w-full lg:max-w-[600px]">
                 <StatTile icon={<TrophyIcon />} label="Montepremi" value={formatPrizePool(tournament.prize_pool)} />
-                <StatTile icon={<CoinIcon />} label="Quota" value={formatMoney(tournament.buy_in)} />
+                <div className="min-w-0 sm:hidden">
+                  <StatTile icon={<CoinIcon />} label="Quota" value={formatMoney(tournament.buy_in)} />
+                </div>
+                <div className="hidden min-w-0 sm:block">
+                  {tournament.winner && ["finished", "paid"].includes(tournament.status) ? (
+                    <StatTile
+                      icon={<TrophyIcon />}
+                      label="Vincitore"
+                      value={tournament.winner.user.username || tournament.winner.user.name || tournament.winner.team_name}
+                    />
+                  ) : tournament.leader && tournament.status === "in-progress" ? (
+                    <StatTile
+                      icon={<TrophyIcon />}
+                      label="In testa"
+                      value={tournament.leader.user.username || tournament.leader.user.name || tournament.leader.team_name}
+                    />
+                  ) : (
+                    <StatTile icon={<CoinIcon />} label="Quota" value={formatMoney(tournament.buy_in)} />
+                  )}
+                </div>
                 <StatTile icon={<UsersIcon />} label="Partecipanti" value={`${tournament.enrolled_users_count}/${tournament.max_participants}`} />
               </div>
             </div>
