@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { LeagueLogo } from "@/components/lobby/shared";
+import { EventsPanel } from "@/components/tournament/EventsPanel";
 import { RegolamentoContent } from "@/components/tournament/RegolamentoContent";
 import { TeamBuilder } from "@/components/tournament/TeamBuilder";
 import { TeamPreviewModal } from "@/components/tournament/TeamPreviewModal";
@@ -15,17 +16,16 @@ import { logFrontendError } from "@/lib/frontend-logger";
 import { getModuleCounts } from "@/lib/tournament-team";
 import type {
   TournamentDetail,
-  TournamentFixture,
   TournamentRankingEntry,
 } from "@/types/tournament";
 
 type DetailTab = "formazione" | "eventi" | "classifica" | "regolamento";
 
-const DETAIL_TABS: Array<{ value: DetailTab; label: string }> = [
-  { value: "formazione", label: "Formazione" },
-  { value: "eventi", label: "Eventi" },
-  { value: "classifica", label: "Classifica" },
-  { value: "regolamento", label: "Regolamento" },
+const DETAIL_TABS: Array<{ value: DetailTab; label: string; icon: React.ReactNode }> = [
+  { value: "formazione", label: "Formazione", icon: <UsersIcon /> },
+  { value: "eventi", label: "Eventi", icon: <CalendarIcon /> },
+  { value: "classifica", label: "Classifica", icon: <BarChartIcon /> },
+  { value: "regolamento", label: "Regolamento", icon: <DocumentIcon /> },
 ];
 
 export default function TournamentDetailPage({
@@ -236,37 +236,10 @@ export default function TournamentDetailPage({
                   />
                 )
               ) : activeTab === "eventi" ? (
-                <div>
-                  <p className="mb-4 text-xs text-zinc-500">
-                    {tournament.fixtures.length} partite valide per questo torneo
-                  </p>
-                  {tournament.fixtures.length ? (
-                    <div className="space-y-5">
-                      {groupFixturesByLeague(tournament.fixtures).map((group) => (
-                        <div key={group.league.id}>
-                          <div className="mb-2 flex items-center gap-2 border-b border-white/10 pb-2">
-                            <LeagueLogo logoUrl={group.league.logo} label={group.league.name} />
-                            <h3 className="text-sm font-black text-white">
-                              {group.league.name}
-                            </h3>
-                            <span className="text-xs text-zinc-500">
-                              ({group.fixtures.length})
-                            </span>
-                          </div>
-                          <div className="space-y-2">
-                            {group.fixtures.map((fixture) => (
-                              <FixtureRow key={fixture.id} fixture={fixture} />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-zinc-500">
-                      Nessun evento assegnato ancora a questo torneo.
-                    </p>
-                  )}
-                </div>
+                <EventsPanel
+                  fixtures={tournament.fixtures}
+                  onGoToRanking={() => setActiveTab("classifica")}
+                />
               ) : activeTab === "classifica" ? (
                 <ClassificaPanel
                   key={tournamentId}
@@ -299,12 +272,13 @@ function TournamentDetailTabs({
           key={tab.value}
           type="button"
           onClick={() => onChange(tab.value)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition sm:py-2 sm:text-sm ${
+          className={`flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition sm:py-2 sm:text-sm ${
             activeTab === tab.value
               ? "bg-[#18C6A7] text-[#06111B] shadow-[0_0_12px_rgba(24,198,167,0.3)] sm:bg-[#22E6C3] sm:shadow-[0_0_18px_rgba(34,230,195,0.35)]"
               : "text-zinc-400 hover:text-[#E9FFFA]"
           }`}
         >
+          {tab.icon}
           {tab.label}
         </button>
       ))}
@@ -656,228 +630,6 @@ function StatTile({
   );
 }
 
-function groupFixturesByLeague(fixtures: TournamentFixture[]) {
-  const groups = new Map<
-    number,
-    { league: TournamentFixture["league"]; fixtures: TournamentFixture[] }
-  >();
-
-  fixtures.forEach((fixture) => {
-    const existing = groups.get(fixture.league.id);
-    if (existing) {
-      existing.fixtures.push(fixture);
-    } else {
-      groups.set(fixture.league.id, { league: fixture.league, fixtures: [fixture] });
-    }
-  });
-
-  return Array.from(groups.values());
-}
-
-function FixtureRow({ fixture }: { fixture: TournamentFixture }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 transition hover:border-white/20 sm:px-5">
-      {/* Mobile: nomi squadra centrati e per intero, niente logo campionato ripetuto (gia' nell'intestazione del gruppo sopra). */}
-      <div className="sm:hidden">
-        <div className="flex items-center justify-end gap-2">
-          <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-400">
-            <CalendarIcon />
-            <FixtureDateInline value={fixture.start_date} />
-          </span>
-        </div>
-        <div className="mt-2.5 flex flex-col items-center gap-1.5 text-center">
-          <span className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
-            <span className="h-6 w-6 shrink-0 rounded-full bg-white/5 p-0.5">
-              {fixture.home_team.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={fixture.home_team.logo} alt="" className="h-full w-full object-contain" />
-              ) : null}
-            </span>
-            {fixture.home_team.name}
-          </span>
-          <FixtureScore fixture={fixture} />
-          <span className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
-            <span className="h-6 w-6 shrink-0 rounded-full bg-white/5 p-0.5">
-              {fixture.away_team.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={fixture.away_team.logo} alt="" className="h-full w-full object-contain" />
-              ) : null}
-            </span>
-            {fixture.away_team.name}
-          </span>
-        </div>
-      </div>
-
-      <DesktopFixture fixture={fixture} />
-    </div>
-  );
-}
-
-const FINAL_STATES = ["FT", "AET", "FT_PEN"];
-
-/** Desktop: casa a sinistra, punteggio grande al centro, ospite a destra. Vincitore in evidenza, perdente attenuato. */
-function DesktopFixture({ fixture }: { fixture: TournamentFixture }) {
-  const { home_team_score: home, away_team_score: away, state } = fixture;
-  const hasScore = home !== null && away !== null;
-  const isFinal = FINAL_STATES.includes(state);
-  const homeWon = hasScore && isFinal && home > away;
-  const awayWon = hasScore && isFinal && away > home;
-
-  return (
-    <div className="hidden min-h-[88px] grid-cols-[110px_minmax(0,1fr)_auto_minmax(0,1fr)_110px] items-center gap-5 sm:grid">
-      <FixtureDate value={fixture.start_date} />
-
-      <div className="flex min-w-0 items-center justify-end gap-3">
-        <span
-          className={`min-w-0 text-right text-base font-black leading-tight ${
-            awayWon ? "text-zinc-500" : "text-white"
-          }`}
-        >
-          {fixture.home_team.name}
-        </span>
-        <FixtureCrest logo={fixture.home_team.logo} dimmed={awayWon} />
-      </div>
-
-      <div className="flex min-w-[96px] justify-center">
-        {hasScore ? (
-          <span
-            className={`flex items-center gap-2 rounded-xl border px-4 py-1.5 font-black tabular-nums ${
-              isFinal
-                ? "border-white/10 bg-black/30"
-                : "border-[#22E6C3]/50 bg-[#123A3B]"
-            }`}
-          >
-            <span className={`text-3xl ${awayWon ? "text-zinc-500" : isFinal ? "text-white" : "text-[#22E6C3]"}`}>
-              {home}
-            </span>
-            <span className="text-xl text-zinc-600">-</span>
-            <span className={`text-3xl ${homeWon ? "text-zinc-500" : isFinal ? "text-white" : "text-[#22E6C3]"}`}>
-              {away}
-            </span>
-          </span>
-        ) : (
-          <span className="text-sm font-black uppercase tracking-wide text-zinc-600">vs</span>
-        )}
-      </div>
-
-      <div className="flex min-w-0 items-center gap-3">
-        <FixtureCrest logo={fixture.away_team.logo} dimmed={homeWon} />
-        <span
-          className={`min-w-0 text-base font-black leading-tight ${
-            homeWon ? "text-zinc-500" : "text-white"
-          }`}
-        >
-          {fixture.away_team.name}
-        </span>
-      </div>
-
-      <div className="flex justify-end">
-        <span
-          className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wide ${
-            !hasScore
-              ? "border-[#1E3448] text-zinc-500"
-              : isFinal
-                ? "border-white/15 text-zinc-300"
-                : "border-[#22E6C3] bg-[#123A3B] text-[#22E6C3]"
-          }`}
-        >
-          {hasScore && !isFinal ? (
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
-          ) : null}
-          {!hasScore ? "In programma" : isFinal ? "Finale" : "Live"}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function FixtureCrest({ logo, dimmed }: { logo: string; dimmed: boolean }) {
-  return (
-    <span
-      className={`h-11 w-11 shrink-0 rounded-full bg-white/5 p-2 ${dimmed ? "opacity-50" : ""}`}
-    >
-      {logo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt="" className="h-full w-full object-contain" />
-      ) : null}
-    </span>
-  );
-}
-
-function FixtureScore({ fixture }: { fixture: TournamentFixture }) {
-  const { home_team_score: home, away_team_score: away, state } = fixture;
-
-  if (home === null || away === null) {
-    return <span className="shrink-0 text-[9px] font-black uppercase text-zinc-600">vs</span>;
-  }
-
-  const isFinal = ["FT", "AET", "FT_PEN"].includes(state);
-
-  return (
-    <span className="flex shrink-0 flex-col items-center gap-0.5">
-      <span
-        className={`rounded-md px-2 py-0.5 font-mono text-sm font-black tabular-nums ${
-          isFinal ? "bg-white/10 text-white" : "bg-[#123A3B] text-[#22E6C3]"
-        }`}
-      >
-        {home} - {away}
-      </span>
-      <span className="text-[9px] font-black uppercase tracking-wide text-zinc-500">
-        {isFinal ? "Finale" : "Live"}
-      </span>
-    </span>
-  );
-}
-
-function FixtureDateInline({ value }: { value: string }) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return <span>{value}</span>;
-  }
-
-  return (
-    <span className="whitespace-nowrap">
-      {new Intl.DateTimeFormat("it-IT", {
-        weekday: "short",
-        day: "2-digit",
-        month: "short",
-      }).format(date)}{" "}
-      ·{" "}
-      {new Intl.DateTimeFormat("it-IT", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(date)}
-    </span>
-  );
-}
-
-function FixtureDate({ value }: { value: string }) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return <p className="text-xs font-bold text-zinc-300">{value}</p>;
-  }
-
-  return (
-    <div>
-      <p className="whitespace-nowrap text-[10px] font-medium text-zinc-400">
-        {new Intl.DateTimeFormat("it-IT", {
-          weekday: "short",
-          day: "2-digit",
-          month: "short",
-        }).format(date)}
-      </p>
-      <p className="text-base font-black text-white">
-        {new Intl.DateTimeFormat("it-IT", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }).format(date)}
-      </p>
-    </div>
-  );
-}
-
 function TournamentDetailSkeleton() {
   return (
     <div
@@ -1000,6 +752,41 @@ function CalendarIcon() {
     >
       <rect x="3" y="5" width="18" height="16" rx="2" />
       <path d="M16 3v4M8 3v4M3 10h18" />
+    </svg>
+  );
+}
+
+function BarChartIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 21V11M12 21V4M19 21v-7" />
+    </svg>
+  );
+}
+
+function DocumentIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M7 3h7l5 5v13H7V3Z" />
+      <path d="M14 3v5h5M10 13h6M10 17h6" />
     </svg>
   );
 }
