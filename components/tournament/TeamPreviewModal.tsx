@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  SubstitutionLink,
+  getSubstitutionContext,
+  type SubstitutionContext,
+} from "@/components/tournament/SubstitutionsPanel";
 import { TeamBuilder } from "@/components/tournament/TeamBuilder";
 import { useAuth } from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api";
@@ -38,6 +43,7 @@ export function TeamPreviewModal({
   const [selectedPlayer, setSelectedPlayer] = useState<{
     fantaLineupId: number;
     name: string;
+    entry: FantaTeamFormationEntry;
   } | null>(null);
 
   function handlePlayerInspect(entry: FantaTeamFormationEntry) {
@@ -46,7 +52,7 @@ export function TeamPreviewModal({
     const fantaLineupId = entry.fanta_lineup_id ?? entry.id;
     if (!Number.isInteger(fantaLineupId) || fantaLineupId <= 0) return;
 
-    setSelectedPlayer({ fantaLineupId, name: entry.name });
+    setSelectedPlayer({ fantaLineupId, name: entry.name, entry });
   }
 
   useEffect(() => {
@@ -161,6 +167,10 @@ export function TeamPreviewModal({
         teamId={teamId}
         fantaLineupId={selectedPlayer.fantaLineupId}
         fallbackName={selectedPlayer.name}
+        substitution={
+          team ? getSubstitutionContext(team.formation_data, selectedPlayer.entry) : null
+        }
+        onOpenPartner={handlePlayerInspect}
         onClose={() => setSelectedPlayer(null)}
       />
     ) : null}
@@ -173,12 +183,16 @@ export function PlayerStatisticsModal({
   teamId,
   fantaLineupId,
   fallbackName,
+  substitution = null,
+  onOpenPartner,
   onClose,
 }: {
   tournamentId: number;
   teamId: number;
   fantaLineupId: number;
   fallbackName: string;
+  substitution?: SubstitutionContext | null;
+  onOpenPartner?: (entry: FantaTeamFormationEntry) => void;
   onClose: () => void;
 }) {
   const { token } = useAuth();
@@ -249,6 +263,9 @@ export function PlayerStatisticsModal({
         </header>
 
         <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5">
+          {substitution ? (
+            <SubstitutionLink context={substitution} onOpenPartner={onOpenPartner} />
+          ) : null}
           {isLoading ? (
             <PlayerStatisticsSkeleton />
           ) : error ? (

@@ -19,6 +19,7 @@ import {
   translateTournamentError,
 } from "@/lib/tournament-team";
 import { CustomDropdown, LeagueLogo } from "@/components/lobby/shared";
+import { SubstitutionsPanel } from "@/components/tournament/SubstitutionsPanel";
 import {
   BENCH_SLOT_KEYS,
   type FantaTeamFormationEntry,
@@ -445,6 +446,13 @@ export function TeamBuilder({
               })}
             </div>
           </div>
+
+          {isReadOnly && showPlayedState && existingTeam ? (
+            <SubstitutionsPanel
+              formationData={existingTeam.formation_data}
+              onInspect={onPlayerInspect}
+            />
+          ) : null}
         </div>
 
         {isReadOnly ? null : (

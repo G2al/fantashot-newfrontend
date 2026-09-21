@@ -9,6 +9,7 @@ import {
   getRankingOwner,
 } from "@/components/tournament/RankingPodium";
 import { RegolamentoContent } from "@/components/tournament/RegolamentoContent";
+import { getSubstitutionContext } from "@/components/tournament/SubstitutionsPanel";
 import { TeamBuilder } from "@/components/tournament/TeamBuilder";
 import {
   PlayerStatisticsModal,
@@ -99,12 +100,13 @@ export default function TournamentDetailPage({
   const [selectedPlayer, setSelectedPlayer] = useState<{
     fantaLineupId: number;
     name: string;
+    entry: FantaTeamFormationEntry;
   } | null>(null);
 
   function handleOwnPlayerInspect(entry: FantaTeamFormationEntry) {
     const fantaLineupId = entry.fanta_lineup_id ?? entry.id;
     if (!Number.isInteger(fantaLineupId) || fantaLineupId <= 0) return;
-    setSelectedPlayer({ fantaLineupId, name: entry.name });
+    setSelectedPlayer({ fantaLineupId, name: entry.name, entry });
   }
 
   const reload = useCallback(
@@ -373,6 +375,11 @@ export default function TournamentDetailPage({
               teamId={tournament.user_fanta_team.id}
               fantaLineupId={selectedPlayer.fantaLineupId}
               fallbackName={selectedPlayer.name}
+              substitution={getSubstitutionContext(
+                tournament.user_fanta_team.formation_data,
+                selectedPlayer.entry,
+              )}
+              onOpenPartner={handleOwnPlayerInspect}
               onClose={() => setSelectedPlayer(null)}
             />
           ) : null}
