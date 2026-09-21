@@ -269,7 +269,15 @@ export function TeamBuilder({
   }
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border border-[#1E3448] bg-[linear-gradient(145deg,#0F1E2E_0%,#0A1420_58%,#06111B_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)] sm:border-[#22E6C3]/30 ${isReadOnly ? "" : "pb-24 sm:pb-0"}`}>
+    <div className={`relative isolate overflow-hidden rounded-xl border border-[#1E3448] bg-[linear-gradient(145deg,#0F1E2E_0%,#0A1420_58%,#06111B_100%)] shadow-[0_26px_80px_rgba(0,0,0,0.45)] sm:border-[#22E6C3]/30 ${isReadOnly ? "" : "pb-24 sm:pb-0"}`}>
+      {/* Sfondo dell'intero blocco (header -> panchina), sempre dietro a tutto. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/tournament-pitch-bg.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover"
+      />
       <div className="hidden flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/15 px-4 py-4 sm:flex sm:px-6">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#22E6C3]/12 text-[#22E6C3]">
@@ -1632,13 +1640,6 @@ function PlayerRoleBadge({ position }: { position: string }) {
 function PitchBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(34,230,195,0.18),transparent_68%)]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/images/tournament-pitch-bg.png"
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
       <div className="absolute inset-x-[8%] bottom-[7%] top-[13%] bg-[radial-gradient(ellipse_at_center,rgba(34,230,195,0.2),transparent_65%)] blur-2xl" />
       {/* eslint-disable-next-line @next/next/no-img-element -- asset sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
       <img
