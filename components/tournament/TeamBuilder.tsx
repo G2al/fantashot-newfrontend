@@ -360,7 +360,7 @@ export function TeamBuilder({
 
       <div className={isReadOnly ? "" : "grid xl:grid-cols-[minmax(0,1fr)_310px]"}>
         <div className="min-w-0 xl:border-r xl:border-[#22E6C3]/20">
-          <div className={`relative mx-auto ${isReadOnly ? "aspect-[5/8]" : "aspect-[3/4]"} w-full max-w-[1120px] sm:aspect-[4/3] xl:-mt-12`}>
+          <div className={`relative mx-auto aspect-[5/8] w-full max-w-[1120px] sm:aspect-[4/3] xl:-mt-12`}>
             <PitchBackground />
 
             <div className="absolute left-1/2 top-2 z-30 w-28 -translate-x-1/2 sm:hidden">
@@ -1634,9 +1634,16 @@ function PitchBackground() {
       <div className="absolute inset-x-[8%] bottom-[7%] top-[13%] bg-[radial-gradient(ellipse_at_center,rgba(34,230,195,0.2),transparent_65%)] blur-2xl" />
       {/* eslint-disable-next-line @next/next/no-img-element -- asset sostituito spesso durante lo sviluppo: la cache dell'ottimizzatore next/image intrappolava versioni vecchie */}
       <img
-        src="/images/tournament-pitch.png"
+        src="/images/tournament-pitch-mobile.png"
         alt="Campo da calcio Fantashot"
-        className="absolute inset-0 h-full w-full object-fill sm:object-contain"
+        className="absolute inset-0 h-full w-full object-contain sm:hidden"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/tournament-pitch.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 hidden h-full w-full object-contain sm:block"
       />
     </div>
   );
