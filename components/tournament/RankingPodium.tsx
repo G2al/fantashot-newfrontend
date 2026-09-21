@@ -22,21 +22,18 @@ const PLACES = {
   1: {
     label: "Vincitore",
     card: "border-amber-400/50 bg-gradient-to-b from-amber-400/15 to-[#0F1E2E] shadow-[0_0_30px_rgba(251,191,36,0.12)]",
-    medal: "bg-amber-400 text-black",
     points: "text-amber-300",
     pad: "py-5 sm:pb-9 sm:pt-7",
   },
   2: {
     label: "2° posto",
     card: "border-zinc-300/30 bg-gradient-to-b from-zinc-300/10 to-[#0F1E2E]",
-    medal: "bg-zinc-300 text-black",
     points: "text-zinc-200",
     pad: "py-4",
   },
   3: {
     label: "3° posto",
     card: "border-orange-400/30 bg-gradient-to-b from-orange-400/10 to-[#0F1E2E]",
-    medal: "bg-orange-400 text-black",
     points: "text-orange-300",
     pad: "py-4",
   },
@@ -110,13 +107,14 @@ function PodiumCard({
         isOwn ? "ring-1 ring-[#22E6C3]/60" : ""
       } ${className}`}
     >
-      <span
-        className={`grid place-items-center rounded-full font-black ${style.medal} ${
-          place === 1 ? "h-11 w-11" : "h-8 w-8 text-sm"
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`/images/podium-${place}.png`}
+        alt={style.label}
+        className={`object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.5)] ${
+          place === 1 ? "h-24 w-24 sm:h-28 sm:w-28" : "h-16 w-16 sm:h-20 sm:w-20"
         }`}
-      >
-        {place === 1 ? <TrophyIcon /> : place}
-      </span>
+      />
       <span className="text-[10px] font-black uppercase tracking-[0.14em] text-zinc-400">
         {style.label}
       </span>
@@ -157,22 +155,4 @@ function formatPoints(points: number) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
-}
-
-function TrophyIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-6 w-6"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z" />
-      <path d="M17 5h2a2 2 0 0 1 2 2 3 3 0 0 1-3 3h-1M7 5H5a2 2 0 0 0-2 2 3 3 0 0 0 3 3h1" />
-    </svg>
-  );
 }
