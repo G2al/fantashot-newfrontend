@@ -144,6 +144,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
+            href="/regolamento"
+            aria-label="Regolamento"
+            className="flex h-10 items-center gap-1.5 rounded-full border border-white/10 bg-[#0F1E2E] px-2.5 text-zinc-300 transition hover:border-[#22E6C3]/40 hover:text-white sm:px-3"
+          >
+            <BookIcon />
+            <span className="hidden text-xs font-bold sm:inline">Regolamento</span>
+          </Link>
+
+          <Link
             href="/profile"
             className="flex h-10 items-center gap-1.5 rounded-full border border-white/10 bg-[#0F1E2E] px-2 text-[11px] font-bold text-white transition hover:border-[#22E6C3]/40 sm:gap-2 sm:px-3 sm:text-sm"
             aria-label={`Saldo wallet: ${formatWalletTotal(user?.wallets)}. Apri il profilo`}
@@ -201,6 +210,24 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
     </div>
+  );
+}
+
+function BookIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+    </svg>
   );
 }
 

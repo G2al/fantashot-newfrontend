@@ -57,7 +57,7 @@ function SubTabButton({
   );
 }
 
-function RegolamentoBody() {
+export function RegolamentoBody() {
   let step = 0;
   const nextStep = () => String(++step).padStart(2, "0");
 
@@ -294,7 +294,7 @@ function RegolamentoBody() {
   );
 }
 
-function StatisticheBody() {
+export function StatisticheBody() {
   return (
     <div className="space-y-4">
       <Section step="01" title="Calcolo del punteggio">
@@ -375,7 +375,7 @@ function StatisticheBody() {
   );
 }
 
-function Section({
+export function Section({
   step,
   title,
   children,
@@ -399,11 +399,11 @@ function Section({
   );
 }
 
-function Paragraph({ children }: { children: React.ReactNode }) {
+export function Paragraph({ children }: { children: React.ReactNode }) {
   return <p className="text-sm leading-6 text-zinc-400">{children}</p>;
 }
 
-function List({
+export function List({
   children,
   numbered = false,
 }: {
@@ -418,7 +418,7 @@ function List({
   );
 }
 
-function ListItem({
+export function ListItem({
   title,
   children,
 }: {
@@ -433,7 +433,7 @@ function ListItem({
   );
 }
 
-function StatTable({
+export function StatTable({
   rows,
   tone,
 }: {
@@ -463,7 +463,7 @@ function StatTable({
   );
 }
 
-function Callout({
+export function Callout({
   tone,
   title,
   children,
