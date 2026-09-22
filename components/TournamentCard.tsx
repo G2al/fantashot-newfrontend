@@ -31,15 +31,14 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
   const isArchived = ["finished", "paid", "cancelled"].includes(tournament.status);
 
   return (
-    <>
-    {isArchived ? (
-      <CompactTournamentRow tournament={tournament} countdown={countdown} />
-    ) : null}
     <article
-      className={`group overflow-hidden rounded-lg border bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 ${isArchived ? "lg:hidden" : "lg:flex lg:flex-col"} ${getCardToneClassName(
+      className={`group relative overflow-hidden rounded-lg border bg-[#0F1E2E]/88 shadow-[0_16px_44px_rgba(0,0,0,0.25)] backdrop-blur-lg transition duration-200 lg:flex lg:flex-col ${getCardToneClassName(
         tournament.status,
       )}`}
     >
+      {isLive ? (
+        <div className="pointer-events-none absolute inset-0 rounded-lg shadow-[0_0_0_1px_rgba(34,230,195,0.45),0_0_28px_rgba(34,230,195,0.22)] animate-pulse-glow" />
+      ) : null}
       <div className="relative hidden h-[132px] w-full shrink-0 items-center justify-center overflow-hidden border-b border-white/8 bg-[radial-gradient(circle_at_50%_40%,rgba(34,230,195,0.2),rgba(6,17,27,0.92)_72%)] lg:flex">
         {coverUrl ? (
           <>
@@ -166,60 +165,6 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           </Link>
         </div>
       </div>
-    </article>
-    </>
-  );
-}
-
-/** Solo desktop: i tornei conclusi sono storico, una riga compatta basta. */
-function CompactTournamentRow({
-  tournament,
-  countdown,
-}: {
-  tournament: Tournament;
-  countdown: string | null;
-}) {
-  return (
-    <article
-      className={`hidden items-center gap-5 rounded-lg border bg-[#0F1E2E]/88 px-4 py-3 transition lg:grid lg:grid-cols-[minmax(0,1.5fr)_110px_90px_minmax(0,1.3fr)_auto] ${getCardToneClassName(
-        tournament.status,
-      )}`}
-    >
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-2">
-          <span
-            className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${getStatusBadgeClassName(
-              tournament.status,
-            )}`}
-          >
-            {STATUS_LABEL[tournament.status]}
-          </span>
-          {tournament.is_user_registered ? <RegisteredPill /> : null}
-        </div>
-        <h2 className="mt-1 truncate text-base font-bold text-white">{tournament.title}</h2>
-        <div className="mt-1.5 flex items-center gap-1.5">
-          {tournament.leagues.slice(0, 6).map((league) => (
-            <LeagueLogo key={league.id} logoUrl={league.logo} label={league.name} />
-          ))}
-        </div>
-      </div>
-      <Metric label="Montepremi" value={formatPrizePool(tournament.prize_pool)} />
-      <Metric
-        label="Iscritti"
-        value={`${tournament.enrolled_users_count}/${tournament.max_participants}`}
-      />
-      <div className="min-w-0 text-[11px] text-zinc-500">
-        <UserResultLine tournament={tournament} />
-        <CardFooterInfo tournament={tournament} countdown={countdown} />
-      </div>
-      <Link
-        href={`/tournaments/${tournament.id}`}
-        className={`flex h-9 shrink-0 items-center justify-center rounded-md px-3 text-xs font-bold transition ${getActionClassName(
-          tournament,
-        )}`}
-      >
-        {getActionLabel(tournament)}
-      </Link>
     </article>
   );
 }
@@ -359,18 +304,26 @@ function getActionClassName(tournament: Tournament) {
   return "border border-[#22E6C3] bg-[#123A3B] text-[#22E6C3] hover:bg-[#22E6C3]/20";
 }
 
-/** Bordo/alone per stato: aperti e live risaltano, i chiusi arretrano. */
+/**
+ * Un solo stile di card per tutti gli stati: la differenza e' solo di colore,
+ * non di forma. Aperto/live risaltano (teal), pagato ricorda il premio
+ * (ambra), concluso/annullato arretrano (grigio, senza hover).
+ */
 function getCardToneClassName(status: TournamentStatus) {
   if (status === "enrollments") {
     return "border-[#22E6C3]/30 hover:-translate-y-0.5 hover:border-[#22E6C3]/50 hover:shadow-[0_18px_52px_rgba(34,230,195,0.12)]";
   }
   if (status === "in-progress") {
-    return "border-[#22E6C3]/50 shadow-[0_0_28px_rgba(34,230,195,0.14)] hover:-translate-y-0.5";
+    return "border-[#22E6C3]/55 hover:-translate-y-0.5";
   }
   if (status === "paid") {
-    return "border-amber-400/25 hover:border-amber-400/40";
+    return "border-amber-400/30 hover:border-amber-400/45 hover:shadow-[0_18px_52px_rgba(251,191,36,0.1)]";
   }
-  return "border-white/10 hover:border-white/20";
+  if (status === "cancelled") {
+    return "border-dashed border-white/10 opacity-75";
+  }
+  // finished
+  return "border-white/10 opacity-90 hover:border-white/20";
 }
 
 function CardFooterInfo({
