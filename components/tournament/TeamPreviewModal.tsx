@@ -241,7 +241,7 @@ export function PlayerStatisticsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="player-statistics-title"
-        className="relative max-h-[88dvh] w-full overflow-y-auto rounded-t-2xl border-t border-[#1E3448] bg-[#0F1E2E] shadow-2xl sm:max-w-lg sm:rounded-2xl sm:border"
+        className="thin-scrollbar relative max-h-[88dvh] w-full overflow-y-auto rounded-t-2xl border-t border-[#1E3448] bg-[#0F1E2E] shadow-2xl sm:max-w-lg sm:rounded-2xl sm:border"
       >
         <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 bg-[#0F1E2E]/95 px-4 py-4 backdrop-blur sm:px-5">
           <div className="min-w-0">
