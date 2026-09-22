@@ -84,14 +84,15 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           {STATUS_LABEL[tournament.status]}
         </span>
           {isFull ? <FullPill className="py-1 shadow-lg" /> : null}
-          {tournament.is_user_registered ? <RegisteredPill className="inline-flex py-1 shadow-lg" /> : null}
+          {tournament.is_user_registered && !isArchived ? <RegisteredPill className="inline-flex py-1 shadow-lg" /> : null}
         </div>
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col p-3.5 lg:p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-[#22E6C3] lg:text-zinc-500">
+            <p className="flex items-center gap-1.5 truncate text-[11px] font-semibold uppercase tracking-wider text-[#22E6C3] lg:text-zinc-500">
+              {isLive ? <LiveDot /> : null}
               {isMultiLeague
                 ? (
                     <>
@@ -117,7 +118,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
             {STATUS_LABEL[tournament.status]}
           </span>
             {isFull ? <FullPill /> : null}
-            {tournament.is_user_registered ? <RegisteredPill /> : null}
+            {tournament.is_user_registered && !isArchived ? <RegisteredPill /> : null}
           </div>
         </div>
 
@@ -175,6 +176,28 @@ function UserResultLine({ tournament }: { tournament: Tournament }) {
 
   if (!result) return null;
 
+  const isFinal = ["finished", "paid"].includes(tournament.status);
+  const isOwnWin = isFinal && result.position === 1;
+
+  if (isOwnWin) {
+    return (
+      <p className="mb-1 flex min-w-0 items-center gap-1.5 text-xs">
+        <span className="shrink-0 text-amber-400">
+          <TrophyIcon />
+        </span>
+        <span className="truncate font-black text-amber-300">Hai vinto</span>
+        {result.points !== null ? (
+          <span className="shrink-0 font-mono font-semibold text-amber-300">
+            {result.points.toLocaleString("it-IT", { maximumFractionDigits: 2 })} pt
+          </span>
+        ) : null}
+        {result.prize ? (
+          <span className="shrink-0 font-bold text-amber-400/80">· {formatMoney(result.prize)}</span>
+        ) : null}
+      </p>
+    );
+  }
+
   return (
     <p className="mb-1 flex min-w-0 items-center gap-1.5 text-xs">
       <span className="shrink-0 rounded-full border border-[#1D6D68] bg-[#123A3B] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#3AF5D4]">
@@ -192,6 +215,15 @@ function UserResultLine({ tournament }: { tournament: Tournament }) {
         <span className="shrink-0 font-bold text-amber-300">· {formatMoney(result.prize)}</span>
       ) : null}
     </p>
+  );
+}
+
+function LiveDot() {
+  return (
+    <span className="relative mr-0.5 flex h-2.5 w-2.5 shrink-0">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22E6C3] opacity-75" />
+      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#22E6C3] shadow-[0_0_8px_rgba(34,230,195,0.9)]" />
+    </span>
   );
 }
 
@@ -263,7 +295,7 @@ function MobileLeagueSummary({ leagues }: { leagues: Tournament["leagues"] }) {
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="truncate text-[9px] font-semibold uppercase tracking-wide text-zinc-600">
+      <p className="truncate text-[9px] font-semibold uppercase tracking-wide text-zinc-500">
         {label}
       </p>
       <p className="mt-0.5 truncate text-xs font-semibold text-zinc-200 lg:text-sm">
@@ -349,8 +381,11 @@ function CardFooterInfo({
   }
 
   const isClosed = tournament.status === "finished" || tournament.status === "paid";
+  const ownResult = getUserResult(tournament);
+  const isOwnWin = isClosed && ownResult?.position === 1;
 
-  if (isClosed && tournament.winner) {
+  // Evita di ripetere "hai vinto" due volte: la riga sopra (UserResultLine) lo dice gia'.
+  if (isClosed && tournament.winner && !isOwnWin) {
     const winner = tournament.winner;
     const name = winner.user.username || winner.user.name || winner.team_name;
 
