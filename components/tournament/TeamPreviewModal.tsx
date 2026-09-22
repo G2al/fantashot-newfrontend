@@ -133,7 +133,7 @@ export function TeamPreviewModal({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
+        <div className="thin-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
           {error === "not-started" ? (
             <StatusMessage
               icon={<LockIcon />}
@@ -281,6 +281,20 @@ export function PlayerStatisticsModal({
 
 function PlayerStatisticsContent({ details }: { details: TournamentPlayerDetails }) {
   const breakdown = details.points_breakdown;
+  const [filter, setFilter] = useState<"all" | "bonus" | "malus">("all");
+
+  const bonusRows = details.statistics.filter((statistic) => Number(statistic.points) > 0);
+  const malusRows = details.statistics.filter((statistic) => Number(statistic.points) < 0);
+  const visibleRows =
+    filter === "bonus" ? bonusRows : filter === "malus" ? malusRows : details.statistics;
+
+  // Proporzioni della barra: sui valori assoluti, cosi' un malus grande si vede
+  // anche se il totale netto e' piccolo o negativo.
+  const magnitude =
+    Math.abs(breakdown.base_points) + Math.abs(breakdown.bonus_points) + Math.abs(breakdown.penalties_points);
+  const baseShare = magnitude ? (Math.abs(breakdown.base_points) / magnitude) * 100 : 0;
+  const bonusShare = magnitude ? (Math.abs(breakdown.bonus_points) / magnitude) * 100 : 0;
+  const malusShare = magnitude ? (Math.abs(breakdown.penalties_points) / magnitude) * 100 : 0;
 
   return (
     <div className="space-y-4">
@@ -318,36 +332,78 @@ function PlayerStatisticsContent({ details }: { details: TournamentPlayerDetails
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <BreakdownCard label="Base" value={breakdown.base_points} tone="neutral" />
-        <BreakdownCard label="Bonus" value={breakdown.bonus_points} tone="positive" />
-        <BreakdownCard label="Malus" value={breakdown.penalties_points} tone="negative" />
+      <div className="rounded-xl border border-[#1E3448] bg-[#101D2C] p-3.5">
+        <div className="flex h-2.5 overflow-hidden rounded-full bg-black/40">
+          {baseShare ? <div className="h-full bg-zinc-400" style={{ width: `${baseShare}%` }} /> : null}
+          {bonusShare ? <div className="h-full bg-green-400" style={{ width: `${bonusShare}%` }} /> : null}
+          {malusShare ? <div className="h-full bg-red-400" style={{ width: `${malusShare}%` }} /> : null}
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+          <BreakdownStat label="Base" value={breakdown.base_points} dotClassName="bg-zinc-400" tone="neutral" />
+          <BreakdownStat
+            label="Bonus"
+            value={breakdown.bonus_points}
+            dotClassName="bg-green-400"
+            tone="positive"
+          />
+          <BreakdownStat
+            label="Malus"
+            value={breakdown.penalties_points}
+            dotClassName="bg-red-400"
+            tone="negative"
+          />
+        </div>
       </div>
 
       <section className="overflow-hidden rounded-xl border border-[#1E3448] bg-[#101D2C]">
-        <div className="border-b border-white/10 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
           <h3 className="text-xs font-black uppercase tracking-[0.12em] text-white">
             Statistiche partita
           </h3>
+          <div className="inline-flex rounded-lg border border-white/10 bg-[#06111B] p-1">
+            <FilterTab active={filter === "all"} onClick={() => setFilter("all")}>
+              Tutte
+            </FilterTab>
+            <FilterTab active={filter === "bonus"} onClick={() => setFilter("bonus")} disabled={!bonusRows.length}>
+              Bonus <span className="opacity-60">{bonusRows.length}</span>
+            </FilterTab>
+            <FilterTab active={filter === "malus"} onClick={() => setFilter("malus")} disabled={!malusRows.length}>
+              Malus <span className="opacity-60">{malusRows.length}</span>
+            </FilterTab>
+          </div>
         </div>
-        {details.statistics.length ? (
+        {visibleRows.length ? (
           <div className="divide-y divide-white/[0.06]">
-            {details.statistics.map((statistic, index) => (
-              <div
-                key={`${statistic.type}-${index}`}
-                className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-3 text-sm"
-              >
-                <span className="truncate font-semibold text-zinc-300">{statistic.label}</span>
-                <span className="font-black text-white">{formatStatisticValue(statistic.value)}</span>
-                <span className={`min-w-12 text-right text-xs font-black ${getPointsTone(statistic.points)}`}>
-                  {formatSignedPoints(statistic.points)} pt
-                </span>
-              </div>
-            ))}
+            {visibleRows.map((statistic, index) => {
+              const points = Number(statistic.points);
+
+              return (
+                <div
+                  key={`${statistic.type}-${index}`}
+                  className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-l-2 px-4 py-3 text-sm ${
+                    points > 0
+                      ? "border-l-green-500/50 bg-green-500/[0.04]"
+                      : points < 0
+                        ? "border-l-red-500/50 bg-red-500/[0.04]"
+                        : "border-l-transparent"
+                  }`}
+                >
+                  <span className="truncate font-semibold text-zinc-300">{statistic.label}</span>
+                  <span className="font-black text-white">{formatStatisticValue(statistic.value)}</span>
+                  <span className={`min-w-12 text-right text-xs font-black ${getPointsTone(points)}`}>
+                    {formatSignedPoints(points)} pt
+                  </span>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="px-4 py-8 text-center text-sm text-zinc-500">
-            Nessuna statistica registrata per questo giocatore.
+            {filter === "all"
+              ? "Nessuna statistica registrata per questo giocatore."
+              : filter === "bonus"
+                ? "Nessun bonus in questa partita."
+                : "Nessun malus in questa partita."}
           </p>
         )}
       </section>
@@ -355,13 +411,41 @@ function PlayerStatisticsContent({ details }: { details: TournamentPlayerDetails
   );
 }
 
-function BreakdownCard({
+function FilterTab({
+  active,
+  disabled = false,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={active}
+      className={`h-7 rounded-md px-2.5 text-[10px] font-black uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-30 ${
+        active ? "bg-[#22E6C3] text-[#06111B]" : "text-zinc-400 hover:text-white"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function BreakdownStat({
   label,
   value,
+  dotClassName,
   tone,
 }: {
   label: string;
   value: number;
+  dotClassName: string;
   tone: "neutral" | "positive" | "negative";
 }) {
   const toneClass = {
@@ -371,8 +455,11 @@ function BreakdownCard({
   }[tone];
 
   return (
-    <div className="rounded-xl border border-[#1E3448] bg-[#101D2C] px-2 py-3 text-center">
-      <p className="text-[9px] font-black uppercase tracking-wide text-zinc-500">{label}</p>
+    <div>
+      <p className="flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-wide text-zinc-500">
+        <span className={`h-1.5 w-1.5 rounded-full ${dotClassName}`} />
+        {label}
+      </p>
       <p className={`mt-1 text-base font-black ${toneClass}`}>
         {tone === "neutral" ? formatPoints(value) : formatSignedPoints(value)}
       </p>

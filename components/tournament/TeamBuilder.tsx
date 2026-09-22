@@ -1469,7 +1469,7 @@ function PlayerPickerModal({
           onClick={(event) => {
             if (event.target === event.currentTarget) onClose();
           }}
-          className="mt-4 grid min-h-0 flex-1 grid-cols-1 content-start gap-1 overflow-y-auto sm:grid-cols-2 sm:gap-2"
+          className="thin-scrollbar mt-4 grid min-h-0 flex-1 grid-cols-1 content-start gap-1 overflow-y-auto sm:grid-cols-2 sm:gap-2"
         >
           {candidates.length ? (
             candidates.map((player) => {
