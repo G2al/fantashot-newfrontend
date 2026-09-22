@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { TournamentCard } from "@/components/TournamentCard";
+import {
+  ClosedTournamentCard,
+  LiveHeroCard,
+  OpenTournamentCard,
+} from "@/components/tournament/LobbyCardVariants";
 import { CustomDropdown, LeagueLogo } from "@/components/lobby/shared";
 import {
   GENERIC_TOURNAMENTS_ERROR,
@@ -235,30 +240,67 @@ export function TournamentLobby() {
             : error}
         </div>
       ) : visibleTournaments.length ? (
-        showSections ? (
-          <div className="mt-2">
+        <>
+          {/* Mobile: griglia unica, invariata. */}
+          <div className="lg:hidden">
+            {showSections ? (
+              <div className="mt-2">
+                {sections.map((section) => (
+                  <section key={section.group} className="mt-5">
+                    <h3 className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-zinc-400">
+                      <span className={`h-2 w-2 rounded-full ${GROUP_DOT[section.group]}`} />
+                      {GROUP_LABEL[section.group]}
+                      <span className="text-zinc-600">{section.items.length}</span>
+                    </h3>
+                    <div className={GRID_CLASS}>
+                      {section.items.map((tournament) => (
+                        <TournamentCard key={tournament.id} tournament={tournament} />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className={`mt-4 ${GRID_CLASS}`}>
+                {visibleTournaments.map((tournament) => (
+                  <TournamentCard key={tournament.id} tournament={tournament} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop: tre livelli di importanza, forma diversa per ciascuno. */}
+          <div className="mt-2 hidden lg:block">
             {sections.map((section) => (
-              <section key={section.group} className="mt-5">
+              <section key={section.group} className="mt-5 first:mt-2">
                 <h3 className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-zinc-400">
                   <span className={`h-2 w-2 rounded-full ${GROUP_DOT[section.group]}`} />
                   {GROUP_LABEL[section.group]}
                   <span className="text-zinc-600">{section.items.length}</span>
                 </h3>
-                <div className={GRID_CLASS}>
-                  {section.items.map((tournament) => (
-                    <TournamentCard key={tournament.id} tournament={tournament} />
-                  ))}
-                </div>
+                {section.group === "live" ? (
+                  <div className="flex flex-col gap-3">
+                    {section.items.map((tournament) => (
+                      <LiveHeroCard key={tournament.id} tournament={tournament} />
+                    ))}
+                  </div>
+                ) : section.group === "open" ? (
+                  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                    {section.items.map((tournament) => (
+                      <OpenTournamentCard key={tournament.id} tournament={tournament} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                    {section.items.map((tournament) => (
+                      <ClosedTournamentCard key={tournament.id} tournament={tournament} />
+                    ))}
+                  </div>
+                )}
               </section>
             ))}
           </div>
-        ) : (
-<div className={`mt-4 ${GRID_CLASS}`}>
-            {visibleTournaments.map((tournament) => (
-              <TournamentCard key={tournament.id} tournament={tournament} />
-            ))}
-          </div>
-        )
+        </>
       ) : (
         <div className="mt-5 rounded-xl border border-white/10 bg-[#0F1E2E]/60 px-5 py-12 text-center backdrop-blur-lg">
           <p className="text-base font-semibold text-zinc-200">

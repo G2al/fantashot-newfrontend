@@ -227,7 +227,7 @@ function LiveDot() {
   );
 }
 
-function FullPill({ className = "" }: { className?: string }) {
+export function FullPill({ className = "" }: { className?: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-400/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-300 ${className}`}
@@ -237,7 +237,7 @@ function FullPill({ className = "" }: { className?: string }) {
   );
 }
 
-function RegisteredPill({ className = "inline-flex" }: { className?: string }) {
+export function RegisteredPill({ className = "inline-flex" }: { className?: string }) {
   return (
     <span
       className={`items-center gap-1 rounded-full border border-[#1D6D68] bg-[#123A3B] px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#3AF5D4] ${className}`}
@@ -305,7 +305,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function getActionLabel(tournament: Tournament) {
+export function getActionLabel(tournament: Tournament) {
   if (tournament.status === "enrollments") {
     if (isFullForVisitor(tournament)) return "Torneo pieno";
     return tournament.is_user_registered ? "Apri torneo" : "Iscriviti";
@@ -320,7 +320,7 @@ function getActionLabel(tournament: Tournament) {
 }
 
 /** Solo l'azione "Iscriviti" e' piena: e' l'unico CTA che porta un ricavo. */
-function getActionClassName(tournament: Tournament) {
+export function getActionClassName(tournament: Tournament) {
   if (isFullForVisitor(tournament)) {
     return "border border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/15";
   }
