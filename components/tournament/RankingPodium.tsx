@@ -34,7 +34,8 @@ const PLACES = {
     avatar: "h-20 w-20 sm:h-28 sm:w-28",
     medal: "h-8 w-8 sm:h-11 sm:w-11 -left-1 -top-1 sm:-left-2 sm:-top-2",
     nameSize: "text-sm sm:text-lg",
-    pointsSize: "mt-0.5 text-2xl sm:mt-1 sm:text-4xl",
+    pointsSize: "mt-0.5 text-xs sm:text-sm",
+    prizeSize: "mt-0.5 px-2.5 py-1 text-sm sm:px-3.5 sm:py-1.5 sm:text-xl",
     step: "h-20 sm:h-32",
     width: "w-28 sm:w-48",
     overlap: "",
@@ -47,7 +48,8 @@ const PLACES = {
     avatar: "h-14 w-14 sm:h-24 sm:w-24",
     medal: "h-6 w-6 sm:h-9 sm:w-9 -left-0.5 -top-0.5 sm:-left-1 sm:-top-1",
     nameSize: "text-[11px] sm:text-base",
-    pointsSize: "mt-0.5 text-lg sm:text-2xl",
+    pointsSize: "mt-0.5 text-[10px] sm:text-xs",
+    prizeSize: "mt-0.5 px-2 py-0.5 text-xs sm:px-2.5 sm:py-1 sm:text-base",
     step: "h-14 sm:h-20",
     width: "w-24 sm:w-40",
     overlap: "z-10 -mr-4 sm:-mr-7",
@@ -60,7 +62,8 @@ const PLACES = {
     avatar: "h-14 w-14 sm:h-20 sm:w-20",
     medal: "h-6 w-6 sm:h-7 sm:w-7 -left-0.5 -top-0.5",
     nameSize: "text-[11px] sm:text-base",
-    pointsSize: "mt-0.5 text-lg sm:text-xl",
+    pointsSize: "mt-0.5 text-[10px] sm:text-xs",
+    prizeSize: "mt-0.5 px-2 py-0.5 text-xs sm:px-2.5 sm:py-1 sm:text-base",
     step: "h-11 sm:h-[3.75rem]",
     width: "w-24 sm:w-40",
     overlap: "z-10 -ml-4 sm:-ml-7",
@@ -172,15 +175,14 @@ function PodiumColumn({
       {owner.fullName ? (
         <span className="hidden max-w-full truncate text-xs text-zinc-500 sm:block">{owner.fullName}</span>
       ) : null}
-      <span className={`font-black tabular-nums ${style.points} ${style.pointsSize}`}>
-        {formatPoints(entry.points)}
-        <span className="ml-1 text-[10px] font-bold text-zinc-500 sm:text-xs">pt</span>
+      <span className={`font-bold tabular-nums text-zinc-400 ${style.pointsSize}`}>
+        {formatPoints(entry.points)} pt
       </span>
       {entry.prize ? (
         <span
-          className={`mt-0.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[9px] font-black sm:px-2.5 sm:text-[11px] ${style.prize}`}
+          className={`whitespace-nowrap rounded-full border font-black shadow-[0_0_14px_rgba(251,191,36,0.15)] ${style.prize} ${style.prizeSize}`}
         >
-          Premio {formatMoney(entry.prize)}
+          {formatMoney(entry.prize)}
         </span>
       ) : null}
 
