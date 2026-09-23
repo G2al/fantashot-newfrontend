@@ -30,6 +30,7 @@ const PLACES = {
     label: "Vincitore",
     points: "text-amber-300",
     ring: "border-amber-400",
+    prize: "border-amber-400/40 bg-amber-400/10 text-amber-300",
     avatar: "h-20 w-20 sm:h-28 sm:w-28",
     medal: "h-8 w-8 sm:h-11 sm:w-11 -left-1 -top-1 sm:-left-2 sm:-top-2",
     nameSize: "text-sm sm:text-lg",
@@ -42,6 +43,7 @@ const PLACES = {
     label: "2° posto",
     points: "text-zinc-200",
     ring: "border-zinc-300",
+    prize: "border-zinc-300/40 bg-zinc-300/10 text-zinc-200",
     avatar: "h-14 w-14 sm:h-24 sm:w-24",
     medal: "h-6 w-6 sm:h-9 sm:w-9 -left-0.5 -top-0.5 sm:-left-1 sm:-top-1",
     nameSize: "text-[11px] sm:text-base",
@@ -54,6 +56,7 @@ const PLACES = {
     label: "3° posto",
     points: "text-orange-300",
     ring: "border-orange-400",
+    prize: "border-orange-400/40 bg-orange-400/10 text-orange-300",
     avatar: "h-14 w-14 sm:h-20 sm:w-20",
     medal: "h-6 w-6 sm:h-7 sm:w-7 -left-0.5 -top-0.5",
     nameSize: "text-[11px] sm:text-base",
@@ -174,7 +177,9 @@ function PodiumColumn({
         <span className="ml-1 text-[10px] font-bold text-zinc-500 sm:text-xs">pt</span>
       </span>
       {entry.prize ? (
-        <span className="mt-0.5 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[9px] font-black text-amber-300 sm:px-2.5 sm:text-[11px]">
+        <span
+          className={`mt-0.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[9px] font-black sm:px-2.5 sm:text-[11px] ${style.prize}`}
+        >
           Premio {formatMoney(entry.prize)}
         </span>
       ) : null}
@@ -184,7 +189,7 @@ function PodiumColumn({
         src={`/images/podium-step-${place}.png`}
         alt=""
         aria-hidden="true"
-        className={`mt-1.5 w-full object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.5)] sm:mt-3 ${style.step}`}
+        className={`mt-1.5 w-full object-contain object-bottom drop-shadow-[0_16px_24px_rgba(0,0,0,0.5)] sm:mt-3 ${style.step}`}
       />
     </button>
   );
