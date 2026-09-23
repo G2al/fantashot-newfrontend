@@ -28,31 +28,31 @@ const PLACES = {
     label: "Vincitore",
     points: "text-amber-300",
     ring: "border-amber-400",
-    avatar: "h-24 w-24 sm:h-28 sm:w-28",
-    medal: "h-9 w-9 sm:h-11 sm:w-11 -left-1 -top-1 sm:-left-2 sm:-top-2",
-    nameSize: "text-lg sm:text-xl",
-    pointsSize: "mt-1 text-3xl sm:text-4xl",
+    avatar: "h-16 w-16 sm:h-20 sm:w-20",
+    medal: "h-7 w-7 sm:h-8 sm:w-8 -left-1 -top-1",
+    nameSize: "text-sm sm:text-base",
+    pointsSize: "mt-0.5 text-2xl sm:text-3xl",
     step: "h-24 sm:h-32",
   },
   2: {
     label: "2° posto",
     points: "text-zinc-200",
     ring: "border-zinc-300",
-    avatar: "h-20 w-20 sm:h-24 sm:w-24",
-    medal: "h-7 w-7 sm:h-9 sm:w-9 -left-1 -top-1",
-    nameSize: "text-sm sm:text-base",
-    pointsSize: "mt-0.5 text-2xl",
-    step: "h-16 sm:h-20",
+    avatar: "h-14 w-14 sm:h-16 sm:w-16",
+    medal: "h-6 w-6 sm:h-7 sm:w-7 -left-0.5 -top-0.5",
+    nameSize: "text-xs sm:text-sm",
+    pointsSize: "mt-0.5 text-lg sm:text-xl",
+    step: "h-14 sm:h-[4.5rem]",
   },
   3: {
     label: "3° posto",
     points: "text-orange-300",
     ring: "border-orange-400",
-    avatar: "h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20",
+    avatar: "h-14 w-14 sm:h-16 sm:w-16",
     medal: "h-6 w-6 sm:h-7 sm:w-7 -left-0.5 -top-0.5",
-    nameSize: "text-sm sm:text-base",
-    pointsSize: "mt-0.5 text-xl sm:text-2xl",
-    step: "h-12 sm:h-[3.75rem]",
+    nameSize: "text-xs sm:text-sm",
+    pointsSize: "mt-0.5 text-lg sm:text-xl",
+    step: "h-10 sm:h-14",
   },
 } as const;
 
@@ -99,14 +99,14 @@ export function RankingPodium({
 
       {/* Desktop: gruppo compatto e centrato, i gradini si toccano come un podio vero
           invece di occupare ciascuno un terzo della larghezza del pannello. */}
-      <div className="relative hidden items-end justify-center py-6 sm:flex">
+      <div className="relative hidden items-end justify-center py-4 sm:flex">
         {second ? (
           <PodiumColumn
             entry={second}
             place={2}
             isOwn={second.id === ownTeamId}
             onSelect={onSelect}
-            className="z-10 w-40 -mr-3"
+            className="z-10 w-32 -mr-5"
           />
         ) : null}
         {first ? (
@@ -115,7 +115,7 @@ export function RankingPodium({
             place={1}
             isOwn={first.id === ownTeamId}
             onSelect={onSelect}
-            className="z-20 w-48"
+            className="z-20 w-36"
           />
         ) : null}
         {third ? (
@@ -124,7 +124,7 @@ export function RankingPodium({
             place={3}
             isOwn={third.id === ownTeamId}
             onSelect={onSelect}
-            className="z-10 w-40 -ml-3"
+            className="z-10 w-32 -ml-5"
           />
         ) : null}
       </div>
@@ -152,7 +152,7 @@ function PodiumColumn({
     <button
       type="button"
       onClick={() => onSelect(entry.id)}
-      className={`relative flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 pb-0 pt-3 text-center transition hover:-translate-y-0.5 ${className}`}
+      className={`relative flex min-w-0 flex-col items-center gap-0.5 rounded-2xl px-1 pb-0 pt-1 text-center transition hover:-translate-y-0.5 ${className}`}
     >
       <span className="relative shrink-0">
         <UserAvatar
@@ -169,21 +169,21 @@ function PodiumColumn({
         />
       </span>
 
-      <span className={`max-w-full truncate font-black text-white ${style.nameSize}`}>
+      <span className={`max-w-full truncate font-semibold text-white ${style.nameSize}`}>
         {owner.nickname}
         {isOwn ? (
           <span className="ml-1.5 text-[10px] font-black uppercase tracking-wide text-[#3AF5D4]">Tu</span>
         ) : null}
       </span>
       {owner.fullName ? (
-        <span className="max-w-full truncate text-xs text-zinc-500">{owner.fullName}</span>
+        <span className="max-w-full truncate text-[10px] text-zinc-500">{owner.fullName}</span>
       ) : null}
       <span className={`font-black tabular-nums ${style.points} ${style.pointsSize}`}>
         {formatPoints(entry.points)}
         <span className="ml-1 text-xs font-bold text-zinc-500">pt</span>
       </span>
       {entry.prize ? (
-        <span className="mt-1 rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-0.5 text-[11px] font-black text-amber-300">
+        <span className="mt-0.5 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-black text-amber-300">
           Premio {formatMoney(entry.prize)}
         </span>
       ) : null}
@@ -193,7 +193,7 @@ function PodiumColumn({
         src={`/images/podium-step-${place}.png`}
         alt=""
         aria-hidden="true"
-        className={`mt-3 w-full object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.5)] ${style.step}`}
+        className={`mt-1 w-full object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.5)] ${style.step}`}
       />
     </button>
   );
