@@ -22,6 +22,15 @@ function parseFixtureDate(value: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function CheckCircleIcon() {
+  return (
+    <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 12.5l2 2 4.5-5" />
+      <circle cx="12" cy="12" r="9" />
+    </svg>
+  );
+}
+
 function toView(fixture: TournamentFixture): FixtureView {
   const { home_team_score: home, away_team_score: away, state } = fixture;
   const hasScore = home !== null && away !== null;
@@ -101,8 +110,19 @@ export function EventsPanel({
           <p className="text-lg font-black text-[#22E6C3] sm:text-xl">
             {leagueCount} {leagueCount === 1 ? "lega" : "leghe"}
           </p>
-          <p className="ml-auto text-xs font-bold text-zinc-400">
-            {allFinal ? "Tutte concluse" : `${finalCount} di ${views.length} concluse`}
+          <p
+            className={`ml-auto flex items-center gap-1.5 text-xs font-bold ${
+              allFinal ? "text-green-400" : "text-zinc-400"
+            }`}
+          >
+            {allFinal ? (
+              <>
+                <CheckCircleIcon />
+                Tutte concluse
+              </>
+            ) : (
+              `${finalCount} di ${views.length} concluse`
+            )}
           </p>
         </div>
         <div
@@ -114,7 +134,11 @@ export function EventsPanel({
           className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"
         >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-[#18C6A7] to-[#22E6C3] shadow-[0_0_10px_rgba(34,230,195,0.5)] transition-[width] duration-500"
+            className={`h-full rounded-full transition-[width] duration-500 ${
+              allFinal
+                ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                : "bg-gradient-to-r from-[#18C6A7] to-[#22E6C3] shadow-[0_0_10px_rgba(34,230,195,0.5)]"
+            }`}
             style={{ width: `${progress}%` }}
           />
         </div>
