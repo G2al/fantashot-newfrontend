@@ -5,7 +5,6 @@ import { resolveApiAssetUrl } from "@/lib/api";
 
 type UserAvatarProps = {
   name: string;
-  initials?: string | null;
   src?: string | null;
   className?: string;
   imageClassName?: string;
@@ -13,19 +12,17 @@ type UserAvatarProps = {
 
 export function UserAvatar({
   name,
-  initials,
   src,
   className = "h-10 w-10",
   imageClassName = "object-cover",
 }: UserAvatarProps) {
-  const fallback = initials?.trim() || getInitials(name);
   // Punto unico di passaggio per ogni avatar dell'app: se il backend manda un
   // path relativo lo si aggancia qui al suo dominio, una volta per tutte.
   const resolvedSrc = resolveApiAssetUrl(src);
 
   return (
     <span
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#1ED8B7]/20 bg-[#123A3B] font-bold uppercase text-[#E9FFFA] ${className}`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#1ED8B7]/20 bg-[#123A3B] text-[#E9FFFA] ${className}`}
       aria-label={name}
     >
       {resolvedSrc ? (
@@ -33,11 +30,11 @@ export function UserAvatar({
           key={resolvedSrc}
           src={resolvedSrc}
           name={name}
-          fallback={fallback}
+          fallback={<DefaultPersonIcon />}
           imageClassName={imageClassName}
         />
       ) : (
-        fallback
+        <DefaultPersonIcon />
       )}
     </span>
   );
@@ -51,7 +48,7 @@ function AvatarImage({
 }: {
   src: string;
   name: string;
-  fallback: string;
+  fallback: React.ReactNode;
   imageClassName: string;
 }) {
   const [hasError, setHasError] = useState(false);
@@ -77,21 +74,17 @@ function AvatarImage({
   );
 }
 
-function getInitials(name: string) {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-
-  if (!words.length) {
-    return "";
-  }
-
-  // Con i nickname il nome e una parola sola: prendendo solo l'iniziale
-  // resterebbe una lettera persa in mezzo al cerchio. Meglio due caratteri.
-  if (words.length === 1) {
-    return words[0].slice(0, 2);
-  }
-
-  return words
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("");
+/** Icona profilo generica di default, al posto delle iniziali quando manca una foto. */
+function DefaultPersonIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="h-[62%] w-[62%] text-[#3AF5D4]/70"
+    >
+      <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" />
+      <path d="M4 21a8 8 0 0 1 16 0 1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" />
+    </svg>
+  );
 }

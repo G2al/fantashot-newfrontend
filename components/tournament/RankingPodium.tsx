@@ -78,34 +78,55 @@ export function RankingPodium({
       />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(6,17,27,0.55)_0%,rgba(6,17,27,0.72)_55%,rgba(6,17,27,0.92)_100%)]" />
 
-      <div className="relative grid grid-cols-2 items-end gap-3 p-4 sm:grid-cols-3 sm:gap-4 sm:p-6">
-      {first ? (
-        <PodiumColumn
-          entry={first}
-          place={1}
-          isOwn={first.id === ownTeamId}
-          onSelect={onSelect}
-          className="col-span-2 sm:order-2 sm:col-span-1"
-        />
-      ) : null}
-      {second ? (
-        <PodiumColumn
-          entry={second}
-          place={2}
-          isOwn={second.id === ownTeamId}
-          onSelect={onSelect}
-          className="sm:order-1"
-        />
-      ) : null}
-      {third ? (
-        <PodiumColumn
-          entry={third}
-          place={3}
-          isOwn={third.id === ownTeamId}
-          onSelect={onSelect}
-          className="sm:order-3"
-        />
-      ) : null}
+      {/* Mobile: griglia, vincitore sopra a tutta larghezza (invariato). */}
+      <div className="relative grid grid-cols-2 items-end gap-3 p-4 sm:hidden">
+        {first ? (
+          <PodiumColumn
+            entry={first}
+            place={1}
+            isOwn={first.id === ownTeamId}
+            onSelect={onSelect}
+            className="col-span-2 w-full"
+          />
+        ) : null}
+        {second ? (
+          <PodiumColumn entry={second} place={2} isOwn={second.id === ownTeamId} onSelect={onSelect} className="w-full" />
+        ) : null}
+        {third ? (
+          <PodiumColumn entry={third} place={3} isOwn={third.id === ownTeamId} onSelect={onSelect} className="w-full" />
+        ) : null}
+      </div>
+
+      {/* Desktop: gruppo compatto e centrato, i gradini si toccano come un podio vero
+          invece di occupare ciascuno un terzo della larghezza del pannello. */}
+      <div className="relative hidden items-end justify-center py-6 sm:flex">
+        {second ? (
+          <PodiumColumn
+            entry={second}
+            place={2}
+            isOwn={second.id === ownTeamId}
+            onSelect={onSelect}
+            className="z-10 w-40 -mr-3"
+          />
+        ) : null}
+        {first ? (
+          <PodiumColumn
+            entry={first}
+            place={1}
+            isOwn={first.id === ownTeamId}
+            onSelect={onSelect}
+            className="z-20 w-48"
+          />
+        ) : null}
+        {third ? (
+          <PodiumColumn
+            entry={third}
+            place={3}
+            isOwn={third.id === ownTeamId}
+            onSelect={onSelect}
+            className="z-10 w-40 -ml-3"
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -131,7 +152,7 @@ function PodiumColumn({
     <button
       type="button"
       onClick={() => onSelect(entry.id)}
-      className={`flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-2 pb-0 pt-3 text-center transition hover:-translate-y-0.5 ${className}`}
+      className={`relative flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 pb-0 pt-3 text-center transition hover:-translate-y-0.5 ${className}`}
     >
       <span className="relative shrink-0">
         <UserAvatar
@@ -172,7 +193,7 @@ function PodiumColumn({
         src={`/images/podium-step-${place}.png`}
         alt=""
         aria-hidden="true"
-        className={`mt-3 w-full max-w-[220px] object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.5)] ${style.step}`}
+        className={`mt-3 w-full object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.5)] ${style.step}`}
       />
     </button>
   );
