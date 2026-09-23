@@ -68,7 +68,17 @@ export function RankingPodium({
   const [first, second, third] = entries;
 
   return (
-    <div className="mb-4 grid grid-cols-2 items-end gap-3 sm:grid-cols-3 sm:gap-4">
+    <div className="relative mb-4 overflow-hidden rounded-2xl border border-amber-400/15">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/podium-bg.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(6,17,27,0.55)_0%,rgba(6,17,27,0.72)_55%,rgba(6,17,27,0.92)_100%)]" />
+
+      <div className="relative grid grid-cols-2 items-end gap-3 p-4 sm:grid-cols-3 sm:gap-4 sm:p-6">
       {first ? (
         <PodiumColumn
           entry={first}
@@ -96,6 +106,7 @@ export function RankingPodium({
           className="sm:order-3"
         />
       ) : null}
+      </div>
     </div>
   );
 }
