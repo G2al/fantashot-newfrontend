@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  referrer: "no-referrer",
   title: "Fantashot",
   description: "Fantashot",
 };

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getMe, logout } from "@/lib/auth-api";
+import { getAuthSnapshot } from "@/lib/auth-store";
 import { UserAvatar } from "@/components/UserAvatar";
 import type { Wallet } from "@/types/auth";
 
@@ -89,7 +90,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         });
     }
 
-    void Promise.resolve().then(refreshWallets);
+    // The provider/login already verified /me; avoid a duplicate on mount.
+    // Registration may have saved only the base profile after a temporary error.
+    if (walletsSignatureRef.current === "null") {
+      void Promise.resolve().then(() => { if (isActive) refreshWallets(); });
+    }
     const intervalId = window.setInterval(refreshWallets, 20000);
     window.addEventListener("focus", refreshWallets);
     document.addEventListener("visibilitychange", refreshWallets);
@@ -124,9 +129,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     } catch {
       // La sessione locale va chiusa anche se la revoca remota non risponde.
     } finally {
-      clearAuth();
       setIsLoggingOut(false);
-      router.replace("/login");
+      if (getAuthSnapshot().token === token) {
+        clearAuth();
+        router.replace("/login");
+      }
     }
   }
 

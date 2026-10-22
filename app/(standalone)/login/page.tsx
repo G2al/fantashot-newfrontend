@@ -21,7 +21,8 @@ export default function LoginPage() {
   // I campi sono volutamente non controllati: precompilarli dopo il mount
   // evita il mismatch di hydration fra HTML del server e localStorage.
   useEffect(() => {
-    const remembered = window.localStorage.getItem(REMEMBERED_EMAIL_KEY);
+    let remembered: string | null = null;
+    try { remembered = window.localStorage.getItem(REMEMBERED_EMAIL_KEY); } catch { /* Optional in embedded browsers. */ }
 
     if (!remembered) {
       return;
@@ -54,11 +55,10 @@ export default function LoginPage() {
       });
       const { user, wallets } = await getMe(token);
 
-      if (rememberMe) {
-        window.localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
-      } else {
-        window.localStorage.removeItem(REMEMBERED_EMAIL_KEY);
-      }
+      try {
+        if (rememberMe) window.localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+        else window.localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+      } catch { /* Saving the email must not prevent login. */ }
 
       setAuth({ ...user, wallets }, token, rememberMe);
       router.push("/dashboard");

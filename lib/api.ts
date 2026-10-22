@@ -64,6 +64,7 @@ export async function apiFetch<T>(
     typeof FormData !== "undefined" && body instanceof FormData;
 
   const response = await fetch(url, {
+    referrerPolicy: "no-referrer",
     method,
     headers: {
       Accept: "application/json",
@@ -82,6 +83,9 @@ export async function apiFetch<T>(
   const data = await readJson(response);
 
   if (!response.ok) {
+    if (response.status === 401 && token && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("fantashot_unauthorized", { detail: token }));
+    }
     const message =
       getErrorMessage(data) ?? `Request failed with status ${response.status}`;
 
